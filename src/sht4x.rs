@@ -5,6 +5,8 @@ use crate::{
 use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
 use sensirion_i2c::i2c;
 
+const RESPONSE_LEN: usize = 6;
+
 // FIXME: Add support for defmt. Mutually exclusive with Debug?
 #[derive(Clone, Copy, Debug)]
 pub enum Address {
@@ -19,6 +21,28 @@ impl Into<u8> for Address {
             Self::Address0x45 => 0x45,
         }
     }
+}
+
+// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[derive(Clone, Copy, Debug)]
+pub enum Precision {
+    Low,
+    Medium,
+    High,
+}
+
+// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[derive(Clone, Copy, Debug)]
+pub struct RawSensorData {
+    pub temperature: u16,
+    pub humidity: u16,
+}
+
+// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[derive(Clone, Copy, Debug)]
+pub struct SensorData {
+    pub temperature_celsius: f32,
+    pub humidity_percent: f32,
 }
 
 pub struct Sht4x<I> {
@@ -41,25 +65,58 @@ where
         }
     }
 
+    pub fn measurement(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
+        let raw = self.sensor_output(precision)?;
+
+        let result = SensorData {
+            temperature_celsius: -45.0f32 + 175.0f32 * (raw.humidity as f32) / (u16::MAX as f32),
+            humidity_percent: -6.0f32 + 125.0f32 * (raw.temperature as f32) / (u16::MAX as f32),
+        };
+
+        Ok(result)
+    }
+
+    pub fn sensor_output(&mut self, precision: Precision) -> Result<RawSensorData, Error<E>> {
+        let command = match precision {
+            Precision::Low => Command::MeasureLowPrecision,
+            Precision::Medium => Command::MeasureMediumPrecision,
+            Precision::High => Command::MeasureHighPrecision,
+        };
+
+        self.write_command(command)?;
+        let response = self.read_response()?;
+        let result = RawSensorData {
+            temperature: u16::from_be_bytes([response[0], response[1]]),
+            humidity: u16::from_be_bytes([response[3], response[4]]),
+        };
+
+        Ok(result)
+    }
+
     pub fn serial_number(&mut self) -> Result<u32, Error<E>> {
-        let mut buf = [0; 6];
-
         self.write_command(Command::SerialNumber)?;
-        // FIXME: What would be a meaningful number of attempts.
-        for _ in 0..100 {
-            let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut buf);
-            match result {
-                // FIXME: Is there really no generic way for checking for NACK?
-                Err(_) => {},
-                Ok(_) => return Ok(u32::from_be_bytes([buf[0], buf[1], buf[3], buf[4]])),
-            }
-        }
+        let response = self.read_response()?;
 
-        Err(Error::NoResponse)
+        Ok(u32::from_be_bytes([response[0], response[1], response[3], response[4]]))
     }
 
     pub fn soft_reset(&mut self) -> Result<(), Error<E>> {
         self.write_command(Command::SoftReset)
+    }
+
+    fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<E>> {
+        let mut response = [0; RESPONSE_LEN];
+
+        for _ in 0..100 {
+            let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response);
+            match result {
+                // FIXME: Is there really no generic way for checking for NACK?
+                Err(_) => {},
+                Ok(_) => return Ok(response),
+            }
+        }
+
+        Err(Error::NoResponse)
     }
 
     fn write_command(&mut self, command: Command) -> Result<(), Error<E>> {
