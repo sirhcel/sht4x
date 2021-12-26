@@ -6,6 +6,7 @@ use sensirion_i2c::i2c;
 #[derive(Debug)]
 pub enum Error<E> {
     I2c(E),
+    NoResponse,
     Crc,
     Internal,
 }

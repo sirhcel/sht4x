@@ -45,9 +45,17 @@ where
         let mut buf = [0; 6];
 
         self.write_command(Command::SerialNumber)?;
-        i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut buf)?;
+        // FIXME: What would be a meaningful number of attempts.
+        for _ in 0..100 {
+            let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut buf);
+            match result {
+                // FIXME: Is there really no generic way for checking for NACK?
+                Err(_) => {},
+                Ok(_) => return Ok(u32::from_be_bytes([buf[0], buf[1], buf[3], buf[4]])),
+            }
+        }
 
-        Ok(u32::from_be_bytes([buf[0], buf[1], buf[3], buf[4]]))
+        Err(Error::NoResponse)
     }
 
     pub fn soft_reset(&mut self) -> Result<(), Error<E>> {
