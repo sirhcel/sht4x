@@ -8,15 +8,15 @@ use sensirion_i2c::i2c;
 // FIXME: Add support for defmt. Mutually exclusive with Debug?
 #[derive(Clone, Copy, Debug)]
 pub enum Address {
-    Address44,
-    Address45,
+    Address0x44,
+    Address0x45,
 }
 
 impl Into<u8> for Address {
     fn into(self) -> u8 {
         match self {
-            Self::Address44 => 44,
-            Self::Address45 => 45,
+            Self::Address0x44 => 0x44,
+            Self::Address0x45 => 0x45,
         }
     }
 }
@@ -31,7 +31,7 @@ where
     I: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
 {
     pub fn new(i2c: I) -> Self {
-        Self::new_with_address(i2c, Address::Address44)
+        Self::new_with_address(i2c, Address::Address0x44)
     }
 
     pub fn new_with_address(i2c: I, address: Address) -> Self {
