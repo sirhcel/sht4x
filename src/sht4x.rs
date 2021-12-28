@@ -3,6 +3,10 @@ use crate::{
     error::Error,
 };
 use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+use fixed::{
+    types::I16F16,
+    const_fixed_from_int,
+};
 use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
@@ -29,6 +33,13 @@ pub enum Precision {
     Low,
     Medium,
     High,
+}
+
+// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[derive(Clone, Copy, Debug)]
+pub struct FixedSensorData {
+    pub temperature_celsius: I16F16,
+    pub humidity_percent: I16F16,
 }
 
 // FIXME: Add support for defmt. Mutually exclusive with Debug?
@@ -82,6 +93,25 @@ where
         let result = SensorData {
             temperature_celsius: -45.0 + 175.0 * (raw.temperature as f32) / (u16::MAX as f32),
             humidity_percent: -6.0 + 125.0 * (raw.humidity as f32) / (u16::MAX as f32),
+        };
+
+        Ok(result)
+    }
+
+    pub fn measurement_fixed(&mut self, precision: Precision) -> Result<FixedSensorData, Error<E>> {
+        const_fixed_from_int! {
+            const MINUS_45: I16F16 = -45;
+            const MINUS_6: I16F16 = -6;
+        }
+
+        let raw = self.sensor_output(precision)?;
+
+        let temperature_quotient = ((raw.temperature as u32) << 16) / (u16::MAX as u32);
+        let humidity_quotient = ((raw.humidity as u32) << 16) / (u16::MAX as u32);
+
+        let result = FixedSensorData {
+            temperature_celsius: MINUS_45 + 175 * I16F16::from_bits(temperature_quotient as i32),
+            humidity_percent: MINUS_6 + 125 * I16F16::from_bits(humidity_quotient as i32),
         };
 
         Ok(result)
