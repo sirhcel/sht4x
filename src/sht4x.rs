@@ -69,8 +69,10 @@ where
         let raw = self.sensor_output(precision)?;
 
         let result = SensorData {
-            temperature_celsius: -45.0f32 + 175.0f32 * (raw.humidity as f32) / (u16::MAX as f32),
-            humidity_percent: -6.0f32 + 125.0f32 * (raw.temperature as f32) / (u16::MAX as f32),
+            // temperature_celsius: -45.0f32 + 175.0f32 * (raw.humidity as f32) / (u16::MAX as f32),
+            // humidity_percent: -6.0f32 + 125.0f32 * (raw.temperature as f32) / (u16::MAX as f32),
+            temperature_celsius: (((21_875 * raw.temperature as i32) >> 13) - 45_000) as f32 / 1_000.0,
+            humidity_percent: (((15_625 * raw.humidity as i32) >> 13) - 6_000) as f32 / 1_000.0,
         };
 
         Ok(result)
