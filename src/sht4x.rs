@@ -54,12 +54,6 @@ pub enum HeatingDuration {
     Long,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct FixedSensorData {
-    pub temperature_celsius: I16F16,
-    pub humidity_percent: I16F16,
-}
-
 impl From<(HeatingPower, HeatingDuration)> for Command {
     fn from((power, duration): (HeatingPower, HeatingDuration)) -> Self {
         match (power, duration) {
@@ -74,9 +68,9 @@ impl From<(HeatingPower, HeatingDuration)> for Command {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct RawSensorData {
-    pub temperature: u16,
-    pub humidity: u16,
+pub struct FixedSensorData {
+    pub temperature_celsius: I16F16,
+    pub humidity_percent: I16F16,
 }
 
 impl From<RawSensorData> for FixedSensorData {
@@ -97,19 +91,24 @@ impl From<RawSensorData> for FixedSensorData {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct SensorData {
+pub struct RawSensorData {
+    pub temperature: u16,
+    pub humidity: u16,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct FloatSensorData {
     pub temperature_celsius: f32,
     pub humidity_percent: f32,
 }
 
-impl From<RawSensorData> for SensorData {
+impl From<RawSensorData> for FloatSensorData {
    fn from(raw: RawSensorData) -> Self {
+       let fixed = FixedSensorData::from(raw);
+
        Self {
-            // TODO: What about using the variant from Sensirion's examples
-            // which uses mor integer arithmetic? Or simply converting the
-            // FixedSensorData to floats?
-            temperature_celsius: -45.0 + 175.0 * (raw.temperature as f32) / (u16::MAX as f32),
-            humidity_percent: -6.0 + 125.0 * (raw.humidity as f32) / (u16::MAX as f32),
+            temperature_celsius: fixed.temperature_celsius.to_num(),
+            humidity_percent: fixed.humidity_percent.to_num(),
        }
    }
 }
@@ -134,35 +133,16 @@ where
         }
     }
 
-    pub fn heated_measurement(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
+    pub fn heated_measurement(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<RawSensorData, Error<E>> {
         let command = Command::from((power, duration));
 
         self.write_command(command)?;
         let raw = self.read_raw_measurement()?;
 
-        Ok(SensorData::from(raw))
+        Ok(raw)
     }
 
-    pub fn heated_measurement_fixed(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<FixedSensorData, Error<E>> {
-        let command = Command::from((power, duration));
-
-        self.write_command(command)?;
-        let raw = self.read_raw_measurement()?;
-
-        Ok(FixedSensorData::from(raw))
-    }
-
-    pub fn measurement(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
-        let raw = self.sensor_output(precision)?;
-        Ok(SensorData::from(raw))
-    }
-
-    pub fn measurement_fixed(&mut self, precision: Precision) -> Result<FixedSensorData, Error<E>> {
-        let raw = self.sensor_output(precision)?;
-        Ok(FixedSensorData::from(raw))
-    }
-
-    pub fn sensor_output(&mut self, precision: Precision) -> Result<RawSensorData, Error<E>> {
+    pub fn measurement(&mut self, precision: Precision) -> Result<RawSensorData, Error<E>> {
         let command = match precision {
             Precision::Low => Command::MeasureLowPrecision,
             Precision::Medium => Command::MeasureMediumPrecision,
@@ -170,9 +150,9 @@ where
         };
 
         self.write_command(command)?;
-        let result = self.read_raw_measurement()?;
+        let raw = self.read_raw_measurement()?;
 
-        Ok(result)
+        Ok(raw)
     }
 
     pub fn serial_number(&mut self) -> Result<u32, Error<E>> {
