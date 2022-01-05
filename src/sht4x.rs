@@ -38,15 +38,20 @@ pub enum Precision {
 
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingPower {
-    Milliwatts20,
-    Milliwatts110,
-    Milliwatts200,
+    /// Operate the heater at 200 mW.
+    Low,
+    /// Operate the heater at 110 mW.
+    Medium,
+    /// Operate the heater at 20 mW.
+    High,
 }
 
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingDuration {
-    Milliseconds100,
-    Milliseconds1000,
+    /// Operate the heater for 100 ms.
+    Short,
+    /// Operate the heater for 1 s.
+    Long,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -58,12 +63,12 @@ pub struct FixedSensorData {
 impl From<(HeatingPower, HeatingDuration)> for Command {
     fn from((power, duration): (HeatingPower, HeatingDuration)) -> Self {
         match (power, duration) {
-            (HeatingPower::Milliwatts20, HeatingDuration::Milliseconds100) => Command::MeasureHeated20Mw100Ms,
-            (HeatingPower::Milliwatts20, HeatingDuration::Milliseconds1000) => Command::MeasureHeated20Mw1S,
-            (HeatingPower::Milliwatts110, HeatingDuration::Milliseconds100) => Command::MeasureHeated110Mw100Ms,
-            (HeatingPower::Milliwatts110, HeatingDuration::Milliseconds1000) => Command::MeasureHeated110Mw1S,
-            (HeatingPower::Milliwatts200, HeatingDuration::Milliseconds100) => Command::MeasureHeated200Mw100Ms,
-            (HeatingPower::Milliwatts200, HeatingDuration::Milliseconds1000) => Command::MeasureHeated200Mw1S,
+            (HeatingPower::Low, HeatingDuration::Short) => Command::MeasureHeated20mw0p1s,
+            (HeatingPower::Low, HeatingDuration::Long) => Command::MeasureHeated20mw1s,
+            (HeatingPower::Medium, HeatingDuration::Short) => Command::MeasureHeated110mw0p1s,
+            (HeatingPower::Medium, HeatingDuration::Long) => Command::MeasureHeated110mw1s,
+            (HeatingPower::High, HeatingDuration::Short) => Command::MeasureHeated200mw0p1s,
+            (HeatingPower::High, HeatingDuration::Long) => Command::MeasureHeated200mw1s,
         }
     }
 }

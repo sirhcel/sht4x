@@ -6,12 +6,12 @@ pub enum Command {
     MeasureLowPrecision,
     SoftReset,
     SerialNumber,
-    MeasureHeated200Mw1S,
-    MeasureHeated200Mw100Ms,
-    MeasureHeated110Mw1S,
-    MeasureHeated110Mw100Ms,
-    MeasureHeated20Mw1S,
-    MeasureHeated20Mw100Ms,
+    MeasureHeated200mw1s,
+    MeasureHeated200mw0p1s,
+    MeasureHeated110mw1s,
+    MeasureHeated110mw0p1s,
+    MeasureHeated20mw1s,
+    MeasureHeated20mw0p1s,
 }
 
 impl Command {
@@ -22,12 +22,12 @@ impl Command {
             Self::MeasureLowPrecision => 0xe0,
             Self::SerialNumber => 0x89,
             Self::SoftReset => 0x94,
-            Self::MeasureHeated200Mw1S => 0x39,
-            Self::MeasureHeated200Mw100Ms => 0x32,
-            Self::MeasureHeated110Mw1S => 0x2f,
-            Self::MeasureHeated110Mw100Ms => 0x24,
-            Self::MeasureHeated20Mw1S => 0x1e,
-            Self::MeasureHeated20Mw100Ms => 0x15,
+            Self::MeasureHeated200mw1s => 0x39,
+            Self::MeasureHeated200mw0p1s => 0x32,
+            Self::MeasureHeated110mw1s => 0x2f,
+            Self::MeasureHeated110mw0p1s => 0x24,
+            Self::MeasureHeated20mw1s => 0x1e,
+            Self::MeasureHeated20mw0p1s => 0x15,
         }
     }
 }
