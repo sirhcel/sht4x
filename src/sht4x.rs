@@ -9,9 +9,11 @@ use fixed::{
 };
 use sensirion_i2c::i2c;
 
+// FIXME: Add defmt support for structs and enums. Mutually exclusive with
+// Debug?
+
 const RESPONSE_LEN: usize = 6;
 
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
 #[derive(Clone, Copy, Debug)]
 pub enum Address {
     Address0x44,
@@ -27,7 +29,6 @@ impl Into<u8> for Address {
     }
 }
 
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
 #[derive(Clone, Copy, Debug)]
 pub enum Precision {
     Low,
@@ -35,25 +36,77 @@ pub enum Precision {
     High,
 }
 
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[derive(Clone, Copy, Debug)]
+pub enum HeatingPower {
+    Milliwatts20,
+    Milliwatts110,
+    Milliwatts200,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum HeatingDuration {
+    Milliseconds100,
+    Milliseconds1000,
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct FixedSensorData {
     pub temperature_celsius: I16F16,
     pub humidity_percent: I16F16,
 }
 
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
+impl From<(HeatingPower, HeatingDuration)> for Command {
+    fn from((power, duration): (HeatingPower, HeatingDuration)) -> Self {
+        match (power, duration) {
+            (HeatingPower::Milliwatts20, HeatingDuration::Milliseconds100) => Command::MeasureHeated20Mw100Ms,
+            (HeatingPower::Milliwatts20, HeatingDuration::Milliseconds1000) => Command::MeasureHeated20Mw1S,
+            (HeatingPower::Milliwatts110, HeatingDuration::Milliseconds100) => Command::MeasureHeated110Mw100Ms,
+            (HeatingPower::Milliwatts110, HeatingDuration::Milliseconds1000) => Command::MeasureHeated110Mw1S,
+            (HeatingPower::Milliwatts200, HeatingDuration::Milliseconds100) => Command::MeasureHeated200Mw100Ms,
+            (HeatingPower::Milliwatts200, HeatingDuration::Milliseconds1000) => Command::MeasureHeated200Mw1S,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct RawSensorData {
     pub temperature: u16,
     pub humidity: u16,
 }
 
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
+impl From<RawSensorData> for FixedSensorData {
+    fn from(raw: RawSensorData) -> Self {
+        const_fixed_from_int! {
+            const MINUS_45: I16F16 = -45;
+            const MINUS_6: I16F16 = -6;
+        }
+
+        let temperature_quotient = ((raw.temperature as u32) << 16) / (u16::MAX as u32);
+        let humidity_quotient = ((raw.humidity as u32) << 16) / (u16::MAX as u32);
+
+        Self {
+            temperature_celsius: MINUS_45 + 175 * I16F16::from_bits(temperature_quotient as i32),
+            humidity_percent: MINUS_6 + 125 * I16F16::from_bits(humidity_quotient as i32),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct SensorData {
     pub temperature_celsius: f32,
     pub humidity_percent: f32,
+}
+
+impl From<RawSensorData> for SensorData {
+   fn from(raw: RawSensorData) -> Self {
+       Self {
+            // TODO: What about using the variant from Sensirion's examples
+            // which uses mor integer arithmetic? Or simply converting the
+            // FixedSensorData to floats?
+            temperature_celsius: -45.0 + 175.0 * (raw.temperature as f32) / (u16::MAX as f32),
+            humidity_percent: -6.0 + 125.0 * (raw.humidity as f32) / (u16::MAX as f32),
+       }
+   }
 }
 
 pub struct Sht4x<I> {
@@ -76,45 +129,32 @@ where
         }
     }
 
-    pub fn measurement(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
-        let raw = self.sensor_output(precision)?;
+    pub fn heated_measurement(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
+        let command = Command::from((power, duration));
 
-        let result = SensorData {
-            temperature_celsius: (((21_875 * raw.temperature as i32) >> 13) - 45_000) as f32 / 1_000.0,
-            humidity_percent: (((15_625 * raw.humidity as i32) >> 13) - 6_000) as f32 / 1_000.0,
-        };
+        self.write_command(command)?;
+        let raw = self.read_raw_measurement()?;
 
-        Ok(result)
+        Ok(SensorData::from(raw))
     }
 
-    pub fn measurement_datasheet(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
+    pub fn heated_measurement_fixed(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<FixedSensorData, Error<E>> {
+        let command = Command::from((power, duration));
+
+        self.write_command(command)?;
+        let raw = self.read_raw_measurement()?;
+
+        Ok(FixedSensorData::from(raw))
+    }
+
+    pub fn measurement(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
         let raw = self.sensor_output(precision)?;
-
-        let result = SensorData {
-            temperature_celsius: -45.0 + 175.0 * (raw.temperature as f32) / (u16::MAX as f32),
-            humidity_percent: -6.0 + 125.0 * (raw.humidity as f32) / (u16::MAX as f32),
-        };
-
-        Ok(result)
+        Ok(SensorData::from(raw))
     }
 
     pub fn measurement_fixed(&mut self, precision: Precision) -> Result<FixedSensorData, Error<E>> {
-        const_fixed_from_int! {
-            const MINUS_45: I16F16 = -45;
-            const MINUS_6: I16F16 = -6;
-        }
-
         let raw = self.sensor_output(precision)?;
-
-        let temperature_quotient = ((raw.temperature as u32) << 16) / (u16::MAX as u32);
-        let humidity_quotient = ((raw.humidity as u32) << 16) / (u16::MAX as u32);
-
-        let result = FixedSensorData {
-            temperature_celsius: MINUS_45 + 175 * I16F16::from_bits(temperature_quotient as i32),
-            humidity_percent: MINUS_6 + 125 * I16F16::from_bits(humidity_quotient as i32),
-        };
-
-        Ok(result)
+        Ok(FixedSensorData::from(raw))
     }
 
     pub fn sensor_output(&mut self, precision: Precision) -> Result<RawSensorData, Error<E>> {
@@ -125,11 +165,7 @@ where
         };
 
         self.write_command(command)?;
-        let response = self.read_response()?;
-        let result = RawSensorData {
-            temperature: u16::from_be_bytes([response[0], response[1]]),
-            humidity: u16::from_be_bytes([response[3], response[4]]),
-        };
+        let result = self.read_raw_measurement()?;
 
         Ok(result)
     }
@@ -145,10 +181,22 @@ where
         self.write_command(Command::SoftReset)
     }
 
+    fn read_raw_measurement(&mut self) -> Result<RawSensorData, Error<E>> {
+        let response = self.read_response()?;
+        let result = RawSensorData {
+            temperature: u16::from_be_bytes([response[0], response[1]]),
+            humidity: u16::from_be_bytes([response[3], response[4]]),
+        };
+
+        Ok(result)
+    }
+
     fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<E>> {
         let mut response = [0; RESPONSE_LEN];
 
-        for _ in 0..100 {
+        // FIXME: Choose a meaningful value. What about providing one from
+        // Command?
+        for _ in 0..10000 {
             let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response);
             match result {
                 // FIXME: Is there really no generic way for checking for NACK?
