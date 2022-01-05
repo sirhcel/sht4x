@@ -91,6 +91,28 @@ impl From<RawSensorData> for FixedSensorData {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub struct MilliSensorData {
+    pub temperature_milli_celsius: i32,
+    pub humidity_milli_percent: i32,
+}
+
+impl From<RawSensorData> for MilliSensorData {
+    fn from(raw: RawSensorData) -> Self {
+        let fixed = FixedSensorData::from(raw);
+        // We need to pre-scale the I16F16 to keep the milli values within the
+        // i32 domain. Preserve as much precision as possible before scaling
+        // down to integer milli values.
+        let milli_celsius = ((fixed.temperature_celsius.to_bits() >> 2) * 1000) >> 14;
+        let milli_percent = ((fixed.humidity_percent.to_bits() >> 2) * 1000) >> 14;
+
+        Self {
+            temperature_milli_celsius: milli_celsius,
+            humidity_milli_percent: milli_percent,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct RawSensorData {
     pub temperature: u16,
     pub humidity: u16,
