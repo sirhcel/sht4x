@@ -8,5 +8,4 @@ edition = "2021"
 [dependencies]
 embedded-hal = "0.2.6"
 fixed = "1.11.0"
-# sensirion-i2c = "0.1.1"
-sensirion-i2c = { path = "../sensirion-i2c-rs" }
+sensirion-i2c = { git = "https://github.com/Sensirion/sensirion-i2c-rs", rev = "b89f4c5" }
