@@ -55,32 +55,24 @@ pub enum HeatingDuration {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct FixedSensorData {
+pub struct Measurement {
     pub temperature_celsius: I16F16,
     pub humidity_percent: I16F16,
 }
 
-impl From<(HeatingPower, HeatingDuration)> for Command {
-    fn from((power, duration): (HeatingPower, HeatingDuration)) -> Self {
-        match (power, duration) {
-            (HeatingPower::Low, HeatingDuration::Short) => Command::MeasureHeated20mw0p1s,
-            (HeatingPower::Low, HeatingDuration::Long) => Command::MeasureHeated20mw1s,
-            (HeatingPower::Medium, HeatingDuration::Short) => Command::MeasureHeated110mw0p1s,
-            (HeatingPower::Medium, HeatingDuration::Long) => Command::MeasureHeated110mw1s,
-            (HeatingPower::High, HeatingDuration::Short) => Command::MeasureHeated200mw0p1s,
-            (HeatingPower::High, HeatingDuration::Long) => Command::MeasureHeated200mw1s,
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug)]
-pub struct RawSensorData {
+pub struct SensorData {
     pub temperature: u16,
     pub humidity: u16,
 }
 
-impl From<RawSensorData> for FixedSensorData {
-    fn from(raw: RawSensorData) -> Self {
+pub struct Sht4x<I> {
+    i2c: I,
+    address: Address,
+}
+
+impl From<SensorData> for Measurement {
+    fn from(raw: SensorData) -> Self {
         const_fixed_from_int! {
             const MINUS_45: I16F16 = -45;
             const MINUS_6: I16F16 = -6;
@@ -96,27 +88,27 @@ impl From<RawSensorData> for FixedSensorData {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct SensorData {
-    pub temperature_celsius: f32,
-    pub humidity_percent: f32,
+impl From<(HeatingPower, HeatingDuration)> for Command {
+    fn from((power, duration): (HeatingPower, HeatingDuration)) -> Self {
+        match (power, duration) {
+            (HeatingPower::Low, HeatingDuration::Short) => Command::MeasureHeated20mw0p1s,
+            (HeatingPower::Low, HeatingDuration::Long) => Command::MeasureHeated20mw1s,
+            (HeatingPower::Medium, HeatingDuration::Short) => Command::MeasureHeated110mw0p1s,
+            (HeatingPower::Medium, HeatingDuration::Long) => Command::MeasureHeated110mw1s,
+            (HeatingPower::High, HeatingDuration::Short) => Command::MeasureHeated200mw0p1s,
+            (HeatingPower::High, HeatingDuration::Long) => Command::MeasureHeated200mw1s,
+        }
+    }
 }
 
-impl From<RawSensorData> for SensorData {
-   fn from(raw: RawSensorData) -> Self {
-       Self {
-            // TODO: What about using the variant from Sensirion's examples
-            // which uses mor integer arithmetic? Or simply converting the
-            // FixedSensorData to floats?
-            temperature_celsius: -45.0 + 175.0 * (raw.temperature as f32) / (u16::MAX as f32),
-            humidity_percent: -6.0 + 125.0 * (raw.humidity as f32) / (u16::MAX as f32),
-       }
-   }
-}
-
-pub struct Sht4x<I> {
-    i2c: I,
-    address: Address,
+impl From<Precision> for Command {
+    fn from(precision: Precision) -> Self {
+        match precision {
+            Precision::Low => Command::MeasureLowPrecision,
+            Precision::Medium => Command::MeasureMediumPrecision,
+            Precision::High => Command::MeasureHighPrecision,
+        }
+    }
 }
 
 impl<I, E> Sht4x<I>
@@ -134,45 +126,35 @@ where
         }
     }
 
-    pub fn heated_measurement(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
+    pub fn heat_and_measure(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<Measurement, Error<E>> {
+        let raw = self.heat_and_measure_raw(power, duration)?;
+
+        Ok(Measurement::from(raw))
+    }
+
+    pub fn heat_and_measure_raw(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
         let command = Command::from((power, duration));
 
         self.write_command(command)?;
-        let raw = self.read_raw_measurement()?;
+        let response = self.read_response()?;
+        let raw = self.sensor_data_from_response(&response);
 
-        Ok(SensorData::from(raw))
+        Ok(raw)
     }
 
-    pub fn heated_measurement_fixed(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<FixedSensorData, Error<E>> {
-        let command = Command::from((power, duration));
+    pub fn measure(&mut self, precision: Precision) -> Result<Measurement, Error<E>> {
+        let raw = self.measure_raw(precision)?;
+        Ok(Measurement::from(raw))
+    }
+
+    pub fn measure_raw(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
+        let command = Command::from(precision);
 
         self.write_command(command)?;
-        let raw = self.read_raw_measurement()?;
+        let response = self.read_response()?;
+        let raw = self.sensor_data_from_response(&response);
 
-        Ok(FixedSensorData::from(raw))
-    }
-
-    pub fn measurement(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
-        let raw = self.sensor_output(precision)?;
-        Ok(SensorData::from(raw))
-    }
-
-    pub fn measurement_fixed(&mut self, precision: Precision) -> Result<FixedSensorData, Error<E>> {
-        let raw = self.sensor_output(precision)?;
-        Ok(FixedSensorData::from(raw))
-    }
-
-    pub fn sensor_output(&mut self, precision: Precision) -> Result<RawSensorData, Error<E>> {
-        let command = match precision {
-            Precision::Low => Command::MeasureLowPrecision,
-            Precision::Medium => Command::MeasureMediumPrecision,
-            Precision::High => Command::MeasureHighPrecision,
-        };
-
-        self.write_command(command)?;
-        let result = self.read_raw_measurement()?;
-
-        Ok(result)
+        Ok(raw)
     }
 
     pub fn serial_number(&mut self) -> Result<u32, Error<E>> {
@@ -186,21 +168,12 @@ where
         self.write_command(Command::SoftReset)
     }
 
-    fn read_raw_measurement(&mut self) -> Result<RawSensorData, Error<E>> {
-        let response = self.read_response()?;
-        let result = RawSensorData {
-            temperature: u16::from_be_bytes([response[0], response[1]]),
-            humidity: u16::from_be_bytes([response[3], response[4]]),
-        };
-
-        Ok(result)
-    }
-
     fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<E>> {
         let mut response = [0; RESPONSE_LEN];
 
-        // FIXME: Choose a meaningful value. What about providing one from
-        // Command?
+        // FIXME: This sensor supports I2C fast mode plus (1 MHz) so by just
+        // counting transactions, we could end up with an error of a magnitude.
+        // Let's use a timer then.
         for _ in 0..10000 {
             let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response);
             match result {
@@ -211,6 +184,13 @@ where
         }
 
         Err(Error::NoResponse)
+    }
+
+    fn sensor_data_from_response(&self, response: &[u8; RESPONSE_LEN]) -> SensorData {
+        SensorData {
+            temperature: u16::from_be_bytes([response[0], response[1]]),
+            humidity: u16::from_be_bytes([response[3], response[4]]),
+        }
     }
 
     fn write_command(&mut self, command: Command) -> Result<(), Error<E>> {
