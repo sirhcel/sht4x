@@ -1,5 +1,5 @@
 use fixed::{
-    types::I16F16,
+    types::{I16F16, I18F14, U16F16},
     const_fixed_from_int,
 };
 
@@ -61,28 +61,28 @@ impl From<SensorData> for Measurement {
             const MINUS_6: I16F16 = -6;
         }
 
-        let temperature_quotient = ((raw.temperature as u32) << 16) / (u16::MAX as u32);
-        let humidity_quotient = ((raw.humidity as u32) << 16) / (u16::MAX as u32);
+        let temperature_quotient = U16F16::from_num(raw.temperature) / (u16::MAX as u32);
+        let humidity_quotient = U16F16::from_num(raw.humidity) / (u16::MAX as u32);
 
         Self {
-            temperature_celsius: MINUS_45 + 175 * I16F16::from_bits(temperature_quotient as i32),
-            humidity_percent: MINUS_6 + 125 * I16F16::from_bits(humidity_quotient as i32),
+            temperature_celsius: MINUS_45 + 175 * temperature_quotient.to_num::<I16F16>(),
+            humidity_percent: MINUS_6 + 125 * humidity_quotient.to_num::<I16F16>(),
         }
     }
 }
 
 impl Measurement {
     pub fn temperature_milli_celsius(&self) -> i32 {
-        // We need to pre-scale the I16F16 to keep the milli values within the
-        // i32 domain. Preserve as much precision as possible before scaling
-        // down to integer milli values.
-        ((self.temperature_celsius.to_bits() >> 2) * 1000) >> 14
+        // Pre-scale to keep the multiplication to millis within the underlying
+        // i32 type.
+        let milli = self.temperature_celsius.to_num::<I18F14>() * 1000;
+        milli.to_num::<i32>()
     }
 
     pub fn humidity_milli_percent(&self) -> i32 {
-        // We need to pre-scale the I16F16 to keep the milli values within the
-        // i32 domain. Preserve as much precision as possible before scaling
-        // down to integer milli values.
-        ((self.humidity_percent.to_bits() >> 2) * 1000) >> 14
+        // Pre-scale to keep the multiplication to millis within the underlying
+        // i32 type.
+        let milli = self.humidity_percent.to_num::<I18F14>() * 1000;
+        milli.to_num::<i32>()
     }
 }
