@@ -70,3 +70,19 @@ impl From<SensorData> for Measurement {
         }
     }
 }
+
+impl Measurement {
+    pub fn temperature_milli_celsius(&self) -> i32 {
+        // We need to pre-scale the I16F16 to keep the milli values within the
+        // i32 domain. Preserve as much precision as possible before scaling
+        // down to integer milli values.
+        ((self.temperature_celsius.to_bits() >> 2) * 1000) >> 14
+    }
+
+    pub fn humidity_milli_percent(&self) -> i32 {
+        // We need to pre-scale the I16F16 to keep the milli values within the
+        // i32 domain. Preserve as much precision as possible before scaling
+        // down to integer milli values.
+        ((self.humidity_percent.to_bits() >> 2) * 1000) >> 14
+    }
+}
