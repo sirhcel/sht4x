@@ -1,6 +1,6 @@
 use fixed::{
-    types::{I16F16, I18F14, U16F16},
     const_fixed_from_int,
+    types::{I16F16, I18F14, U16F16},
 };
 
 #[derive(Clone, Copy, Debug)]

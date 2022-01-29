@@ -11,7 +11,7 @@ pub enum Error<E> {
     Internal,
 }
 
-impl <E, W, R> From<i2c::Error<W, R>> for Error<E>
+impl<E, W, R> From<i2c::Error<W, R>> for Error<E>
 where
     W: Write<Error = E>,
     R: Read<Error = E>,

@@ -1,14 +1,7 @@
 use crate::{
     commands::Command,
     error::Error,
-    types::{
-        Address,
-        HeatingDuration,
-        HeatingPower,
-        Measurement,
-        Precision,
-        SensorData,
-    },
+    types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData},
 };
 use embedded_hal::blocking::{
     delay::DelayMs,
@@ -67,13 +60,21 @@ where
         }
     }
 
-    pub fn heat_and_measure(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<Measurement, Error<E>> {
+    pub fn heat_and_measure(
+        &mut self,
+        power: HeatingPower,
+        duration: HeatingDuration,
+    ) -> Result<Measurement, Error<E>> {
         let raw = self.heat_and_measure_raw(power, duration)?;
 
         Ok(Measurement::from(raw))
     }
 
-    pub fn heat_and_measure_raw(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
+    pub fn heat_and_measure_raw(
+        &mut self,
+        power: HeatingPower,
+        duration: HeatingDuration,
+    ) -> Result<SensorData, Error<E>> {
         let command = Command::from((power, duration));
 
         self.write_command_and_delay_for_execution(command)?;
@@ -102,7 +103,12 @@ where
         self.write_command_and_delay_for_execution(Command::SerialNumber)?;
         let response = self.read_response()?;
 
-        Ok(u32::from_be_bytes([response[0], response[1], response[3], response[4]]))
+        Ok(u32::from_be_bytes([
+            response[0],
+            response[1],
+            response[3],
+            response[4],
+        ]))
     }
 
     pub fn soft_reset(&mut self) -> Result<(), Error<E>> {
