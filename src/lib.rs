@@ -6,7 +6,7 @@ pub mod error;
 pub mod sht4x;
 pub mod types;
 
-pub use commands::*;
-pub use error::*;
-pub use sht4x::*;
-pub use types::*;
+pub use crate::commands::*;
+pub use crate::error::*;
+pub use crate::sht4x::*;
+pub use crate::types::*;
