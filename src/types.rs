@@ -9,14 +9,15 @@ pub enum Address {
     Address0x45,
 }
 
-impl Into<u8> for Address {
-    fn into(self) -> u8 {
-        match self {
-            Self::Address0x44 => 0x44,
-            Self::Address0x45 => 0x45,
+impl From<Address> for u8 {
+    fn from(address: Address) -> Self {
+        match address {
+            Address::Address0x44 => 0x44,
+            Address::Address0x45 => 0x45,
         }
     }
 }
+
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingPower {
     /// Operate the heater at 200 mW.
