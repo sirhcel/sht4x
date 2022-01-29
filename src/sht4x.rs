@@ -10,7 +10,10 @@ use crate::{
         SensorData,
     },
 };
-use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
+use embedded_hal::blocking::{
+    delay::DelayMs,
+    i2c::{Read, Write, WriteRead},
+};
 use sensirion_i2c::i2c;
 
 // FIXME: Add defmt support for structs and enums. Mutually exclusive with
@@ -18,9 +21,10 @@ use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
 
-pub struct Sht4x<I> {
+pub struct Sht4x<I, D> {
     i2c: I,
     address: Address,
+    delay: D,
 }
 
 impl From<(HeatingPower, HeatingDuration)> for Command {
@@ -46,18 +50,20 @@ impl From<Precision> for Command {
     }
 }
 
-impl<I, E> Sht4x<I>
+impl<I, D, E> Sht4x<I, D>
 where
     I: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
+    D: DelayMs<u16>,
 {
-    pub fn new(i2c: I) -> Self {
-        Self::new_with_address(i2c, Address::Address0x44)
+    pub fn new(i2c: I, delay: D) -> Self {
+        Self::new_with_address(i2c, Address::Address0x44, delay)
     }
 
-    pub fn new_with_address(i2c: I, address: Address) -> Self {
+    pub fn new_with_address(i2c: I, address: Address, delay: D) -> Self {
         Sht4x {
             i2c,
             address,
+            delay,
         }
     }
 
@@ -70,7 +76,7 @@ where
     pub fn heat_and_measure_raw(&mut self, power: HeatingPower, duration: HeatingDuration) -> Result<SensorData, Error<E>> {
         let command = Command::from((power, duration));
 
-        self.write_command(command)?;
+        self.write_command_and_delay_for_execution(command)?;
         let response = self.read_response()?;
         let raw = self.sensor_data_from_response(&response);
 
@@ -85,7 +91,7 @@ where
     pub fn measure_raw(&mut self, precision: Precision) -> Result<SensorData, Error<E>> {
         let command = Command::from(precision);
 
-        self.write_command(command)?;
+        self.write_command_and_delay_for_execution(command)?;
         let response = self.read_response()?;
         let raw = self.sensor_data_from_response(&response);
 
@@ -93,32 +99,22 @@ where
     }
 
     pub fn serial_number(&mut self) -> Result<u32, Error<E>> {
-        self.write_command(Command::SerialNumber)?;
+        self.write_command_and_delay_for_execution(Command::SerialNumber)?;
         let response = self.read_response()?;
 
         Ok(u32::from_be_bytes([response[0], response[1], response[3], response[4]]))
     }
 
     pub fn soft_reset(&mut self) -> Result<(), Error<E>> {
-        self.write_command(Command::SoftReset)
+        self.write_command_and_delay_for_execution(Command::SoftReset)
     }
 
     fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<E>> {
         let mut response = [0; RESPONSE_LEN];
 
-        // FIXME: This sensor supports I2C fast mode plus (1 MHz) so by just
-        // counting transactions, we could end up with an error of a magnitude.
-        // Let's use a timer then.
-        for _ in 0..10000 {
-            let result = i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response);
-            match result {
-                // FIXME: Is there really no generic way for checking for NACK?
-                Err(_) => {},
-                Ok(_) => return Ok(response),
-            }
-        }
+        i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response)?;
 
-        Err(Error::NoResponse)
+        Ok(response)
     }
 
     fn sensor_data_from_response(&self, response: &[u8; RESPONSE_LEN]) -> SensorData {
@@ -128,9 +124,14 @@ where
         }
     }
 
-    fn write_command(&mut self, command: Command) -> Result<(), Error<E>> {
+    fn write_command_and_delay_for_execution(&mut self, command: Command) -> Result<(), Error<E>> {
         let code = command.code();
 
-        i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)
+        i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)?;
+        if let Some(ms) = command.duration_ms() {
+            self.delay.delay_ms(ms);
+        }
+
+        Ok(())
     }
 }

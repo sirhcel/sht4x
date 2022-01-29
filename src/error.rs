@@ -4,9 +4,9 @@ use sensirion_i2c::i2c;
 // FIXME: Add support for defmt. Shall Debug and defmt be mutual exclusive?
 // Which version of defmt to support?
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error<E> {
     I2c(E),
-    NoResponse,
     Crc,
     Internal,
 }

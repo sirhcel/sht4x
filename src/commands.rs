@@ -15,7 +15,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub(crate) fn code(self) -> u8 {
+    pub(crate) fn code(&self) -> u8 {
         match self {
             Self::MeasureHighPrecision => 0xfd,
             Self::MeasureMediumPrecision => 0xf6,
@@ -28,6 +28,24 @@ impl Command {
             Self::MeasureHeated110mw0p1s => 0x24,
             Self::MeasureHeated20mw1s => 0x1e,
             Self::MeasureHeated20mw0p1s => 0x15,
+        }
+    }
+
+    pub(crate) fn duration_ms(&self) -> Option<u16> {
+        // Values rounded up from the maximum durations given in the datasheet
+        // table 4, 'System timing specifications'.
+        match self {
+            Self::MeasureHighPrecision => Some(9),
+            Self::MeasureMediumPrecision => Some(5),
+            Self::MeasureLowPrecision => Some(2),
+            Self::SerialNumber => None,
+            Self::SoftReset => Some(1),
+            Self::MeasureHeated200mw1s => Some(1100),
+            Self::MeasureHeated200mw0p1s => Some(110),
+            Self::MeasureHeated110mw1s => Some(1100),
+            Self::MeasureHeated110mw0p1s => Some(110),
+            Self::MeasureHeated20mw1s => Some(1100),
+            Self::MeasureHeated20mw0p1s => Some(110),
         }
     }
 }
