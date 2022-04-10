@@ -31,21 +31,23 @@ impl Command {
         }
     }
 
-    pub(crate) fn duration_ms(&self) -> Option<u16> {
+    pub(crate) fn duration_ms(&self) -> u16 {
         // Values rounded up from the maximum durations given in the datasheet
         // table 4, 'System timing specifications'.
         match self {
-            Self::MeasureHighPrecision => Some(9),
-            Self::MeasureMediumPrecision => Some(5),
-            Self::MeasureLowPrecision => Some(2),
-            Self::SerialNumber => None,
-            Self::SoftReset => Some(1),
-            Self::MeasureHeated200mw1s => Some(1100),
-            Self::MeasureHeated200mw0p1s => Some(110),
-            Self::MeasureHeated110mw1s => Some(1100),
-            Self::MeasureHeated110mw0p1s => Some(110),
-            Self::MeasureHeated20mw1s => Some(1100),
-            Self::MeasureHeated20mw0p1s => Some(110),
+            Self::MeasureHighPrecision => 9,
+            Self::MeasureMediumPrecision => 5,
+            Self::MeasureLowPrecision => 2,
+            // There is no explicit time given for the serial number, but reading it immediately
+            // results in a NACK. So be a bit more patient here.
+            Self::SerialNumber => 1,
+            Self::SoftReset => 1,
+            Self::MeasureHeated200mw1s => 1100,
+            Self::MeasureHeated200mw0p1s => 110,
+            Self::MeasureHeated110mw1s => 1100,
+            Self::MeasureHeated110mw0p1s => 110,
+            Self::MeasureHeated20mw1s => 1100,
+            Self::MeasureHeated20mw0p1s => 110,
         }
     }
 }

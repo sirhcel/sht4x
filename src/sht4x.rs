@@ -151,9 +151,7 @@ where
         let code = command.code();
 
         i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)?;
-        if let Some(ms) = command.duration_ms() {
-            delay.delay_ms(ms);
-        }
+        delay.delay_ms(command.duration_ms());
 
         Ok(())
     }
