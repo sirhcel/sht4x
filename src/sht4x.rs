@@ -10,11 +10,10 @@ use embedded_hal::blocking::{
 };
 use sensirion_i2c::i2c;
 
-// FIXME: Add defmt support for structs and enums. Mutually exclusive with
-// Debug?
-
 const RESPONSE_LEN: usize = 6;
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[derive(Debug)]
 pub struct Sht4x<I, D> {
     i2c: I,
     address: Address,

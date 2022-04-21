@@ -1,8 +1,7 @@
 use embedded_hal::blocking::i2c::{Read, Write};
 use sensirion_i2c::i2c;
 
-// FIXME: Add support for defmt. Shall Debug and defmt be mutual exclusive?
-// Which version of defmt to support?
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error<E> {

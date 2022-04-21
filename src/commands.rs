@@ -1,4 +1,4 @@
-// FIXME: Add support for defmt. Mutually exclusive with Debug?
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum Command {
     MeasureHighPrecision,

@@ -3,6 +3,7 @@ use fixed::{
     types::{I16F16, I18F14, U16F16},
 };
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum Address {
     Address0x44,
@@ -18,6 +19,7 @@ impl From<Address> for u8 {
     }
 }
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingPower {
     /// Operate the heater at 200 mW.
@@ -28,6 +30,7 @@ pub enum HeatingPower {
     High,
 }
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingDuration {
     /// Operate the heater for 100 ms.
@@ -42,6 +45,7 @@ pub struct Measurement {
     pub humidity_percent: I16F16,
 }
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum Precision {
     Low,
@@ -49,10 +53,26 @@ pub enum Precision {
     High,
 }
 
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub struct SensorData {
     pub temperature: u16,
     pub humidity: u16,
+}
+
+#[cfg(feature = "defmt")]
+impl defmt::Format for Measurement {
+    fn format(&self, f: defmt::Formatter) {
+        defmt::write!(
+            f,
+            // Let's start with just formatting it into the raw bits. The I16F16 representation
+            // should be reable easily readable with some training and rendering the fields as
+            // bitfields poses around the same challenges - at least for negative values.
+            "Measurement {{ temperature_celsius: {:x}, humidity_percent: {:x} }}",
+            self.temperature_celsius.to_bits(),
+            self.humidity_percent.to_bits()
+        );
+    }
 }
 
 impl From<SensorData> for Measurement {
