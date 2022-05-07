@@ -50,10 +50,20 @@ where
     I: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
     D: DelayMs<u16>,
 {
+    /// Creates a new driver instance using the given I2C bus. It configures the default I2C
+    /// address 0x44 used by most family members.
+    ///
+    /// For operating multiple devices on the same bus,
+    /// [`shared-bus`](https://github.com/Rahix/shared-bus) might come in handy.
     pub fn new(i2c: I) -> Self {
         Self::new_with_address(i2c, Address::Address0x44)
     }
 
+    /// Crates a new driver instance using the given I2C bus and address. This constructor allows
+    /// to instantiate the driver for the SHT40-BD1B which uses the non-default I2C address 0x45.
+    ///
+    /// For operating multiple devices on the same bus,
+    /// [`shared-bus`](https://github.com/Rahix/shared-bus) might come in handy.
     pub fn new_with_address(i2c: I, address: Address) -> Self {
         Sht4x {
             i2c,
@@ -62,6 +72,17 @@ where
         }
     }
 
+    /// Destroys the driver and returns the used I2C bus.
+    pub fn destroy(self) -> I {
+        self.i2c
+    }
+
+    /// Activates the heater and performs a measurement returning measurands in SI units.
+    ///
+    /// **Note:** The heater is designed to be used up to 10 % of the sensor's lifetime. Please
+    /// check the
+    /// [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf),
+    /// section 4.9 _Heater Operation_ for details.
     pub fn heat_and_measure(
         &mut self,
         power: HeatingPower,
@@ -73,6 +94,12 @@ where
         Ok(Measurement::from(raw))
     }
 
+    /// Activates the heater and performs a measurement returning raw sensor data.
+    ///
+    /// **Note:** The heater is designed to be used up to 10 % of the sensor's lifetime. Please
+    /// check the
+    /// [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf),
+    /// section 4.9 _Heater Operation_ for details.
     pub fn heat_and_measure_raw(
         &mut self,
         power: HeatingPower,
@@ -88,6 +115,7 @@ where
         Ok(raw)
     }
 
+    /// Performs a measurement returning measurands in SI units.
     pub fn measure(
         &mut self,
         precision: Precision,
@@ -97,6 +125,7 @@ where
         Ok(Measurement::from(raw))
     }
 
+    /// Performs a measurement returning raw sensor data.
     pub fn measure_raw(
         &mut self,
         precision: Precision,
@@ -111,6 +140,7 @@ where
         Ok(raw)
     }
 
+    /// Reads the sensor's serial number.
     pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<E>> {
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)?;
         let response = self.read_response()?;
@@ -123,6 +153,7 @@ where
         ]))
     }
 
+    /// Performs a soft reset of the sensor.
     pub fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<E>> {
         self.write_command_and_delay_for_execution(Command::SoftReset, delay)
     }
