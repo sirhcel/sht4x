@@ -63,14 +63,15 @@ pub struct SensorData {
 #[cfg(feature = "defmt")]
 impl defmt::Format for Measurement {
     fn format(&self, f: defmt::Formatter) {
+        // Format as milli units for a tradeoff between readability and efficiency. The conversion
+        // should compile to a shift and a multiplication.
+        //
+        // TODO: Are there any means to control the rendering on the host side?
         defmt::write!(
             f,
-            // Let's start with just formatting it into the raw bits. The I16F16 representation
-            // should be reable easily readable with some training and rendering the fields as
-            // bitfields poses around the same challenges - at least for negative values.
-            "Measurement {{ temperature_celsius: {:x}, humidity_percent: {:x} }}",
-            self.temperature_celsius.to_bits(),
-            self.humidity_percent.to_bits()
+            "Measurement {{ temperature m°C: {}, humidity m%: {} }}",
+            self.temperature_milli_celsius(),
+            self.humidity_milli_percent(),
         );
     }
 }
