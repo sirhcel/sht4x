@@ -1,11 +1,14 @@
 use embedded_hal::blocking::i2c::{Read, Write};
 use sensirion_i2c::i2c;
 
+/// Error conditions from accessing SHT4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error<E> {
+    /// Failed I2C communication.
     I2c(E),
+    /// Failed CRC verification of sensor data.
     Crc,
 }
 

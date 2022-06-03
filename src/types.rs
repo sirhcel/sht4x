@@ -3,6 +3,7 @@ use fixed::{
     types::{I16F16, I18F14, U16F16},
 };
 
+/// I2C adresses used by STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum Address {
@@ -19,6 +20,7 @@ impl From<Address> for u8 {
     }
 }
 
+/// Heating power to apply when activating the internal heater.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingPower {
@@ -30,6 +32,7 @@ pub enum HeatingPower {
     High,
 }
 
+/// Duration of heating when activating the internal heater.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum HeatingDuration {
@@ -39,12 +42,18 @@ pub enum HeatingDuration {
     Long,
 }
 
+/// A measurement from the sensor in SI units.
 #[derive(Clone, Copy, Debug)]
 pub struct Measurement {
+    /// The measurred temperature in degree Celsius (°C).
     pub temperature_celsius: I16F16,
+    /// The measured relative humidity in percent (%).
     pub humidity_percent: I16F16,
 }
 
+/// The precision to request for a measurement.
+///
+/// Higher-precision measurements take longer.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub enum Precision {
@@ -53,10 +62,13 @@ pub enum Precision {
     High,
 }
 
+/// A measurement from the sensor in raw sensor data.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug)]
 pub struct SensorData {
+    /// The measured temperature as raw sensor value.
     pub temperature: u16,
+    /// The measured realtive humidity as raw sensor value.
     pub humidity: u16,
 }
 
@@ -77,6 +89,7 @@ impl defmt::Format for Measurement {
 }
 
 impl From<SensorData> for Measurement {
+    /// Converts raw sensor data into SI units.
     fn from(raw: SensorData) -> Self {
         const_fixed_from_int! {
             const MINUS_45: I16F16 = -45;
@@ -94,6 +107,13 @@ impl From<SensorData> for Measurement {
 }
 
 impl Measurement {
+    /// Returns the measured temperature in milli degree Celsius (m°C, a thousand of a degree
+    /// Celsius).
+    ///
+    /// # Panic
+    ///
+    /// Panics if the conversion overflows. It is safe for safe for all [`Measurement`]s obtained
+    /// from [`SensorData`] but might panic for other values.
     pub fn temperature_milli_celsius(&self) -> i32 {
         // Pre-scale to keep the multiplication to millis within the underlying
         // i32 type.
@@ -101,6 +121,13 @@ impl Measurement {
         milli.to_num::<i32>()
     }
 
+    /// Returns the measured temperature in milli percent relative humidity (m% RH, a thousand of a
+    /// percent).
+    ///
+    /// # Panic
+    ///
+    /// Panics if the conversion overflows. It is safe for safe for all [`Measurement`]s obtained
+    /// from [`SensorData`] but might panic for other values.
     pub fn humidity_milli_percent(&self) -> i32 {
         // Pre-scale to keep the multiplication to millis within the underlying
         // i32 type.

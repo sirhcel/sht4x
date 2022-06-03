@@ -12,6 +12,7 @@ use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
 
+/// Driver for STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug)]
 pub struct Sht4x<I, D> {
