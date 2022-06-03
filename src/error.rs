@@ -7,7 +7,6 @@ use sensirion_i2c::i2c;
 pub enum Error<E> {
     I2c(E),
     Crc,
-    Internal,
 }
 
 impl<E, W, R> From<i2c::Error<W, R>> for Error<E>
