@@ -81,7 +81,7 @@ impl defmt::Format for Measurement {
         // TODO: Are there any means to control the rendering on the host side?
         defmt::write!(
             f,
-            "Measurement {{ temperature m°C: {}, humidity m%: {} }}",
+            "Measurement {{ {} m°C, {} m% }}",
             self.temperature_milli_celsius(),
             self.humidity_milli_percent(),
         );
