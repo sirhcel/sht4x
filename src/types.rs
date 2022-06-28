@@ -46,9 +46,9 @@ pub enum HeatingDuration {
 #[derive(Clone, Copy, Debug)]
 pub struct Measurement {
     /// The measurred temperature in degree Celsius (°C).
-    pub temperature_celsius: I16F16,
+    temperature: I16F16,
     /// The measured relative humidity in percent (%).
-    pub humidity_percent: I16F16,
+    humidity: I16F16,
 }
 
 /// The precision to request for a measurement.
@@ -100,38 +100,37 @@ impl From<SensorData> for Measurement {
         let humidity_quotient = U16F16::from_num(raw.humidity) / (u16::MAX as u32);
 
         Self {
-            temperature_celsius: MINUS_45 + 175 * temperature_quotient.to_num::<I16F16>(),
-            humidity_percent: MINUS_6 + 125 * humidity_quotient.to_num::<I16F16>(),
+            temperature: MINUS_45 + 175 * temperature_quotient.to_num::<I16F16>(),
+            humidity: MINUS_6 + 125 * humidity_quotient.to_num::<I16F16>(),
         }
     }
 }
 
 impl Measurement {
+    /// Returns the measured temperature in degree Celsius (°C).
+    pub fn temperature_celsius(&self) -> I16F16 {
+        self.temperature
+    }
+
     /// Returns the measured temperature in milli degree Celsius (m°C, a thousand of a degree
     /// Celsius).
-    ///
-    /// # Panic
-    ///
-    /// Panics if the conversion overflows. It is safe for safe for all [`Measurement`]s obtained
-    /// from [`SensorData`] but might panic for other values.
     pub fn temperature_milli_celsius(&self) -> i32 {
         // Pre-scale to keep the multiplication to millis within the underlying
         // i32 type.
-        let milli = self.temperature_celsius.to_num::<I18F14>() * 1000;
+        let milli = self.temperature.to_num::<I18F14>() * 1000;
         milli.to_num::<i32>()
     }
 
-    /// Returns the measured temperature in milli percent relative humidity (m% RH, a thousand of a
-    /// percent).
-    ///
-    /// # Panic
-    ///
-    /// Panics if the conversion overflows. It is safe for safe for all [`Measurement`]s obtained
-    /// from [`SensorData`] but might panic for other values.
+    /// Returns the measured relative humidity in milli percent (m% RH, a thousand of a percent).
     pub fn humidity_milli_percent(&self) -> i32 {
         // Pre-scale to keep the multiplication to millis within the underlying
         // i32 type.
-        let milli = self.humidity_percent.to_num::<I18F14>() * 1000;
+        let milli = self.humidity.to_num::<I18F14>() * 1000;
         milli.to_num::<i32>()
+    }
+
+    /// Returns the measured relative humidity in percent (%).
+    pub fn humidity_percent(&self) -> I16F16 {
+        self.humidity
     }
 }
