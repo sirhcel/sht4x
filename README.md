@@ -21,7 +21,7 @@ tested with the SHT40-AD1B so far.
   [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf)
 - Explicitly borrows `DelayMs` for command execution so that it could be shared
   (among multiple sensors)
-- Could be instatiated with the alternative I2C address for the SHT40-BD1B
+- Could be instantiated with the alternative I2C address for the SHT40-BD1B
 - Uses fixed-point arithmetics for converting raw sensor data into measurements
   in SI units
     - Based on `I16F16` from the [`fixed`](https://gitlab.com/tspiteri/fixed)
@@ -34,6 +34,30 @@ tested with the SHT40-AD1B so far.
 
 
 ## Example
+
+```rust ignore
+use embedded_hal::blocking::delay::DelayMs;
+use sht4x::Sht4x;
+// Device-specific use declarations.
+
+let mut delay = // Device-specific initialization of delay.
+let i2c = // Device-specific initialization of I2C peripheral.
+let mut sht40 = Sht4x::new(i2c);
+
+let serial = sht40.serial_number(&mut delay);
+defmt::info!("serial number: {}", serial);
+
+let measurement = sht40.measure(Precision::Low, &mut delay);
+defmt::info!("measurement: {}", &measurement);
+
+if let Ok(measurement) = measurement {
+    // Convert temperature measurand into different formats for further
+    // processing.
+    let int: i32 = measurement.temperature_milli_celsius();
+    let fixed: I16F16 = measurement.temperature_celsius();
+    let float: f32 = measurement.temperature_celsius().to_num();
+}
+```
 
 
 ## Related Work
