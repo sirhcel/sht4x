@@ -1,7 +1,4 @@
-use fixed::{
-    const_fixed_from_int,
-    types::{I16F16, I18F14, U16F16},
-};
+use fixed::types::{I16F16, I18F14, U16F16};
 
 /// I2C adresses used by STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -91,10 +88,8 @@ impl defmt::Format for Measurement {
 impl From<SensorData> for Measurement {
     /// Converts raw sensor data into SI units.
     fn from(raw: SensorData) -> Self {
-        const_fixed_from_int! {
-            const MINUS_45: I16F16 = -45;
-            const MINUS_6: I16F16 = -6;
-        }
+        const MINUS_45: I16F16 = I16F16::const_from_int(-45);
+        const MINUS_6: I16F16 = I16F16::const_from_int(-6);
 
         let temperature_quotient = U16F16::from_num(raw.temperature) / (u16::MAX as u32);
         let humidity_quotient = U16F16::from_num(raw.humidity) / (u16::MAX as u32);
