@@ -1,9 +1,25 @@
 [package]
 name = "sht4x"
+description = "Sensirion SHT4x Driver for Embedded HAL"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Christian Meusel <christian.meusel@posteo.de>"]
+
+license = "MIT OR Apache-2.0"
+
+categories = ["embedded", "hardware-support", "no-std"]
+keywords = ["driver", "embedded-hal-driver", "sensirion", "sht40"]
+
+documentation = "https://docs.rs/sht4x"
+repository = "https://github.com/sirhcel/sht4x"
+readme = "README.md"
+
+exclude = [
+    "/.github/",
+    ".gitignore",
+]
+
 
 [dependencies]
 defmt = { version = "0.3.2", optional = true }
