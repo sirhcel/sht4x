@@ -1,4 +1,5 @@
 use embedded_hal::blocking::i2c::{Read, Write};
+use sensirion_i2c::crc8::Error as CrcError;
 use sensirion_i2c::i2c;
 
 /// Error conditions from accessing SHT4x sensors.
@@ -22,6 +23,14 @@ where
             i2c::Error::Crc => Error::Crc,
             i2c::Error::I2cRead(e) => Error::I2c(e),
             i2c::Error::I2cWrite(e) => Error::I2c(e),
+        }
+    }
+}
+
+impl<E> From<CrcError> for Error<E> {
+    fn from(value: CrcError) -> Self {
+        match value {
+            CrcError::CrcError => Error::Crc,
         }
     }
 }

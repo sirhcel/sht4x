@@ -26,6 +26,10 @@ defmt = { version = "0.3.2", optional = true }
 embedded-hal = "0.2.7"
 fixed = "1.20.0"
 sensirion-i2c = "0.2"
+embedded-hal-async = { version = "1.0.0-rc.1", optional = true }
 
 [features]
+default = ["blocking"]
 defmt = ["dep:defmt"]
+blocking = []
+async = ["dep:embedded-hal-async"]
