@@ -11,7 +11,7 @@ use embedded_hal::blocking::{
 };
 #[cfg(feature = "async")]
 use embedded_hal_async::{
-    delay::DelayUs,
+    delay::DelayNs,
     i2c::{I2c, SevenBitAddress},
 };
 #[cfg(feature = "blocking")]
@@ -200,7 +200,7 @@ where
 impl<I, D, E> Sht4x<I, D>
 where
     I: I2c<SevenBitAddress, Error = E>,
-    D: DelayUs,
+    D: DelayNs,
 {
     /// Creates a new driver instance using the given I2C bus. It configures the default I2C
     /// address 0x44 used by most family members.
