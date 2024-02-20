@@ -4,10 +4,8 @@ use crate::{
     types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData},
 };
 use core::marker::PhantomData;
-use embedded_hal::blocking::{
-    delay::DelayMs,
-    i2c::{Read, Write, WriteRead},
-};
+use embedded_hal::{delay::DelayNs, i2c::I2c};
+
 use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
@@ -46,10 +44,9 @@ impl From<Precision> for Command {
     }
 }
 
-impl<I, D, E> Sht4x<I, D>
+impl<I: I2c, D> Sht4x<I, D>
 where
-    I: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
-    D: DelayMs<u16>,
+    D: DelayNs,
 {
     /// Creates a new driver instance using the given I2C bus. It configures the default I2C
     /// address 0x44 used by most family members.
@@ -89,7 +86,7 @@ where
         power: HeatingPower,
         duration: HeatingDuration,
         delay: &mut D,
-    ) -> Result<Measurement, Error<E>> {
+    ) -> Result<Measurement, Error<I::Error>> {
         let raw = self.heat_and_measure_raw(power, duration, delay)?;
 
         Ok(Measurement::from(raw))
@@ -106,7 +103,7 @@ where
         power: HeatingPower,
         duration: HeatingDuration,
         delay: &mut D,
-    ) -> Result<SensorData, Error<E>> {
+    ) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from((power, duration));
 
         self.write_command_and_delay_for_execution(command, delay)?;
@@ -121,7 +118,7 @@ where
         &mut self,
         precision: Precision,
         delay: &mut D,
-    ) -> Result<Measurement, Error<E>> {
+    ) -> Result<Measurement, Error<I::Error>> {
         let raw = self.measure_raw(precision, delay)?;
         Ok(Measurement::from(raw))
     }
@@ -131,7 +128,7 @@ where
         &mut self,
         precision: Precision,
         delay: &mut D,
-    ) -> Result<SensorData, Error<E>> {
+    ) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from(precision);
 
         self.write_command_and_delay_for_execution(command, delay)?;
@@ -142,7 +139,7 @@ where
     }
 
     /// Reads the sensor's serial number.
-    pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<E>> {
+    pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<I::Error>> {
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)?;
         let response = self.read_response()?;
 
@@ -155,11 +152,11 @@ where
     }
 
     /// Performs a soft reset of the sensor.
-    pub fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<E>> {
+    pub fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<I::Error>> {
         self.write_command_and_delay_for_execution(Command::SoftReset, delay)
     }
 
-    fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<E>> {
+    fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<I::Error>> {
         let mut response = [0; RESPONSE_LEN];
 
         i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response)?;
@@ -178,7 +175,7 @@ where
         &mut self,
         command: Command,
         delay: &mut D,
-    ) -> Result<(), Error<E>> {
+    ) -> Result<(), Error<I::Error>> {
         let code = command.code();
 
         i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)?;

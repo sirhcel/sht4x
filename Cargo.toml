@@ -23,9 +23,9 @@ exclude = [
 
 [dependencies]
 defmt = { version = "0.3.2", optional = true }
-embedded-hal = "0.2.7"
+embedded-hal = "1.0.0"
 fixed = "1.20.0"
-sensirion-i2c = "0.2"
+sensirion-i2c = "0.3.0"
 
 [features]
 defmt = ["dep:defmt"]
