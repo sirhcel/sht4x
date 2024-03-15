@@ -4,10 +4,7 @@ use crate::{
     types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData},
 };
 use core::marker::PhantomData;
-use embedded_hal::blocking::{
-    delay::DelayMs,
-    i2c::{Read, Write, WriteRead},
-};
+use embedded_hal::{delay::DelayNs, i2c::I2c, i2c::SevenBitAddress};
 use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
@@ -48,8 +45,8 @@ impl From<Precision> for Command {
 
 impl<I, D, E> Sht4x<I, D>
 where
-    I: Read<Error = E> + Write<Error = E> + WriteRead<Error = E>,
-    D: DelayMs<u16>,
+    I: I2c<SevenBitAddress, Error = E>,
+    D: DelayNs,
 {
     /// Creates a new driver instance using the given I2C bus. It configures the default I2C
     /// address 0x44 used by most family members.

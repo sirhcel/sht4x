@@ -1,4 +1,5 @@
-use embedded_hal::blocking::i2c::{Read, Write};
+use embedded_hal::i2c::I2c;
+use embedded_hal::i2c::SevenBitAddress;
 use sensirion_i2c::i2c;
 
 /// Error conditions from accessing SHT4x sensors.
@@ -12,12 +13,11 @@ pub enum Error<E> {
     Crc,
 }
 
-impl<E, W, R> From<i2c::Error<W, R>> for Error<E>
+impl<I, E> From<i2c::Error<I>> for Error<E>
 where
-    W: Write<Error = E>,
-    R: Read<Error = E>,
+    I: I2c<SevenBitAddress, Error = E>,
 {
-    fn from(err: i2c::Error<W, R>) -> Self {
+    fn from(err: i2c::Error<I>) -> Self {
         match err {
             i2c::Error::Crc => Error::Crc,
             i2c::Error::I2cRead(e) => Error::I2c(e),
