@@ -15,17 +15,16 @@ documentation = "https://docs.rs/sht4x"
 repository = "https://github.com/sirhcel/sht4x"
 readme = "README.md"
 
-exclude = [
-    "/.github/",
-    ".gitignore",
-]
+exclude = ["/.github/", ".gitignore"]
 
 
 [dependencies]
 defmt = { version = "0.3.2", optional = true }
 embedded-hal = "1.0.0"
+embedded-hal-async = { version = "1.0.0", optional = true }
 fixed = "1.20.0"
 sensirion-i2c = "0.3.0"
 
 [features]
 defmt = ["dep:defmt"]
+async = ["dep:embedded-hal-async"]

@@ -1,5 +1,5 @@
 use embedded_hal::i2c::I2c;
-use sensirion_i2c::i2c;
+use sensirion_i2c;
 
 /// Error conditions from accessing SHT4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -12,12 +12,21 @@ pub enum Error<E> {
     Crc,
 }
 
-impl<I: I2c> From<i2c::Error<I>> for Error<I::Error> {
-    fn from(err: i2c::Error<I>) -> Self {
+impl<I: I2c> From<sensirion_i2c::i2c::Error<I>> for Error<I::Error> {
+    fn from(err: sensirion_i2c::i2c::Error<I>) -> Self {
         match err {
-            i2c::Error::Crc => Error::Crc,
-            i2c::Error::I2cRead(e) => Error::I2c(e),
-            i2c::Error::I2cWrite(e) => Error::I2c(e),
+            sensirion_i2c::i2c::Error::Crc => Error::Crc,
+            sensirion_i2c::i2c::Error::I2cRead(e) => Error::I2c(e),
+            sensirion_i2c::i2c::Error::I2cWrite(e) => Error::I2c(e),
+        }
+    }
+}
+
+#[cfg(feature = "async")]
+impl<E> From<sensirion_i2c::crc8::Error> for Error<E> {
+    fn from(value: sensirion_i2c::crc8::Error) -> Self {
+        match value {
+            sensirion_i2c::crc8::Error::CrcError => Error::Crc,
         }
     }
 }
