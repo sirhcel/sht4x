@@ -13,30 +13,30 @@ tested with the SHT40-AD1B so far.
 [![crates.io](https://img.shields.io/crates/v/sht4x.svg)](https://crates.io/crates/sht4x)
 ![Documentation](https://docs.rs/sht4x/badge.svg)
 
-
 ## Features
 
 - Blocking operation
+- Async operation if the `async` feature is specified
+- Uses the latest embedded_hal 1.0.0
 - Supports all commands specified in the
   [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf)
-- Explicitly borrows `DelayMs` for command execution so that it could be shared
+- Explicitly borrows `DelayNs` for command execution so that it could be shared
   (among multiple sensors)
 - Could be instantiated with the alternative I2C address for the SHT40-BD1B
 - Uses fixed-point arithmetics for converting raw sensor data into measurements
   in SI units
-    - Based on `I16F16` from the [`fixed`](https://gitlab.com/tspiteri/fixed)
-      crate
-    - Allows conversion to floating-point values, if needed
-    - Convenience methods for fixed-point conversions to milli degree Celsius
-      or milli percent relative humidity which are commonly used by drivers for
-      other humidity and temperature sensors from Sensirion
+  - Based on `I16F16` from the [`fixed`](https://gitlab.com/tspiteri/fixed)
+    crate
+  - Allows conversion to floating-point values, if needed
+  - Convenience methods for fixed-point conversions to milli degree Celsius
+    or milli percent relative humidity which are commonly used by drivers for
+    other humidity and temperature sensors from Sensirion
 - Optional support for [`defmt`](https://github.com/knurling-rs/defmt)
-
 
 ## Example
 
 ```rust ignore
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayNs;
 use sht4x::Sht4x;
 // Device-specific use declarations.
 
@@ -59,12 +59,10 @@ if let Ok(measurement) = measurement {
 }
 ```
 
-
 ## Related Work
 
 [sensor-temp-humidity-sht40](https://github.com/lc525/sensor-temp-humidity-sht40-rs)
 is another driver for this sensor family.
-
 
 ## License
 
@@ -77,7 +75,6 @@ Licensed under either of
   <http://opensource.org/licenses/MIT>)
 
 at your discretion.
-
 
 ### Contribution
 
