@@ -1,5 +1,4 @@
 use embedded_hal::i2c::I2c;
-use sensirion_i2c;
 
 /// Error conditions from accessing SHT4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
