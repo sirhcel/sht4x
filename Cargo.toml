@@ -1,7 +1,7 @@
 [package]
 name = "sht4x"
 description = "Sensirion SHT4x Driver for Embedded HAL"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 authors = ["Christian Meusel <christian.meusel@posteo.de>"]
@@ -23,9 +23,9 @@ exclude = [
 
 [dependencies]
 defmt = { version = "0.3.2", optional = true }
-embedded-hal = "0.2.7"
+embedded-hal = "1.0.0"
 fixed = "1.20.0"
-sensirion-i2c = "0.2"
+sensirion-i2c = "0.3"
 
 [features]
 defmt = ["dep:defmt"]
