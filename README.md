@@ -58,6 +58,30 @@ if let Ok(measurement) = measurement {
 }
 ```
 
+## `embedded-hal-async` support
+
+This crate has optional support for the [`embedded-hal-async`] crate, which
+provides `async` versions of the `I2c` and `DelayNs` traits. Async support
+is an off-by-default optional feature, so that projects which aren't using
+[`embedded-hal-async`] can avoid the additional dependency.
+
+To use this crate with `embedded-hal-async`, enable the `embedded-hal-async`
+feature flag in your `Cargo.toml`:
+
+```toml
+sht4x = { version = "0.2", features = ["embedded-hal-async"] }
+```
+
+Once the `embedded-hal-async` feature is enabled, construct an instance of
+the `AsyncSht4x` struct, providing types implementing the
+[`embedded_hal_async::i2c::I2c`] and [`embedded_hal_async::delay::DelayNs`]
+traits. The `AsyncSht4x` struct is identical to the `Sht4x` struct,
+except that its methods are `async fn`s.
+
+[`embedded-hal-async`]: https://crates.io/crates/embedded-hal-async
+[`embedded_hal_async::i2c::I2c`]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/i2c/trait.I2c.html
+[`embedded_hal_async::delay::DelayNs`]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/delay/trait.DelayNs.html
+
 
 ## Related Work
 
