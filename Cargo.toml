@@ -25,7 +25,7 @@ defmt = { version = "0.3.2", optional = true }
 embedded-hal = "1.0.0"
 embedded-hal-async = { version = "1.0.0", optional = true }
 fixed = "1.20.0"
-sensirion-i2c = "0.3.0"
+sensirion-i2c = "0.4"
 
 [features]
 defmt = ["dep:defmt"]
@@ -34,8 +34,3 @@ embedded-hal-async = ["dep:embedded-hal-async", "sensirion-i2c/embedded-hal-asyn
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-# Necessary for `embedded-hal-async` support until a new release of
-# `sensirion-i2c-rs` is published.
-[patch.crates-io]
-sensirion-i2c = { git = "https://github.com/sensirion/sensirion-i2c-rs", rev = "f7b9f3a81b777bc6e6b2f0acb4c1ef9c57dfa06d" }
