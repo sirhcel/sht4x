@@ -15,7 +15,7 @@ use sensirion_i2c::i2c_async;
 /// of the `embedded-hal` traits, and all of its methods are `async fn`s.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug)]
-pub struct AsyncSht4x<I, D> {
+pub struct Sht4xAsync<I, D> {
     i2c: I,
     address: Address,
     // If we want to globally define the delay type for this struct, we have to consume the type
@@ -23,7 +23,7 @@ pub struct AsyncSht4x<I, D> {
     _delay: PhantomData<D>,
 }
 
-impl<I, D> AsyncSht4x<I, D>
+impl<I, D> Sht4xAsync<I, D>
 where
     I: I2c,
     D: DelayNs,
