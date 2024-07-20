@@ -73,9 +73,9 @@ sht4x = { version = "0.2", features = ["embedded-hal-async"] }
 ```
 
 Once the `embedded-hal-async` feature is enabled, construct an instance of
-the `AsyncSht4x` struct, providing types implementing the
+the `Sht4xAsync` struct, providing types implementing the
 [`embedded_hal_async::i2c::I2c`] and [`embedded_hal_async::delay::DelayNs`]
-traits. The `AsyncSht4x` struct is identical to the `Sht4x` struct,
+traits. The `Sht4xAsync` struct is identical to the `Sht4x` struct,
 except that its methods are `async fn`s.
 
 [`embedded-hal-async`]: https://crates.io/crates/embedded-hal-async
