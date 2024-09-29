@@ -1,7 +1,7 @@
 [package]
 name = "sht4x-ng"
-description = "Sensirion SHT4x Driver for Embedded HAL"
-version = "0.2.0"
+description = "Sensirion SHT4x Driver for Embedded HAL 1.0 with optional async support"
+version = "0.2.1"
 edition = "2021"
 
 authors = [
