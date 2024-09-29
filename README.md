@@ -42,7 +42,7 @@ tested with the SHT40-AD1B so far.
 
 ```rust ignore
 use embedded_hal::delay::DelayNs;
-use sht4x::Sht4x;
+use sht4x_ng::Sht4x;
 // Device-specific use declarations.
 
 let mut delay = // Device-specific initialization of delay.
