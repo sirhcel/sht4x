@@ -1,28 +1,28 @@
 [package]
-name = "sht4x"
+name = "sht4x-ng"
 description = "Sensirion SHT4x Driver for Embedded HAL"
 version = "0.2.0"
 edition = "2021"
 
-authors = ["Christian Meusel <christian.meusel@posteo.de>"]
+authors = [
+    "Christian Meusel <christian.meusel@posteo.de>",
+    "Brian Bustin",
+    "Moritz Bitsch",
+]
 
 license = "MIT OR Apache-2.0"
 
 categories = ["embedded", "hardware-support", "no-std"]
 keywords = ["driver", "embedded-hal-driver", "sensirion", "sht40"]
 
-documentation = "https://docs.rs/sht4x"
-repository = "https://github.com/sirhcel/sht4x"
-readme = "README.md"
-
 exclude = ["/.github/", ".gitignore"]
 
 
 [dependencies]
-defmt = { version = "0.3.2", optional = true }
+defmt = { version = "0.3.8", optional = true }
 embedded-hal = "1.0.0"
 embedded-hal-async = { version = "1.0.0", optional = true }
-fixed = "1.20.0"
+fixed = "1.27.0"
 sensirion-i2c = "0.3.0"
 
 [features]

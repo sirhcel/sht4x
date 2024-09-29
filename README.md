@@ -1,3 +1,8 @@
+# Fork of https://github.com/sirhcel/sht4x/
+This is a fork of sirhcel's sht4x library. It brings async to the library and updates it to use embedded_hal 1.0.0. I based this code on [madmo's branch](https://github.com/madmo/sht4x/) as he already did the embedded-hal updating work in [his pull request](https://github.com/sirhcel/sht4x/pull/3).
+
+The fork is hopefully temporary. [I have tried to get these changes pulled into the sht4x repo without success](https://github.com/sirhcel/sht4x/pull/5).
+
 # Sensirion SHT4x Driver for Embedded HAL
 
 A platform agnostic device driver for the Sensirion [SHT4x temperature and
