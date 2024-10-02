@@ -5,8 +5,6 @@ use crate::{
 };
 use core::marker::PhantomData;
 
-use sensirion_i2c;
-
 #[cfg(not(feature = "async"))]
 use embedded_hal::{delay::DelayNs, i2c::I2c};
 
