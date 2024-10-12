@@ -31,7 +31,7 @@ impl Command {
         }
     }
 
-    pub(crate) fn duration_ms(&self) -> u16 {
+    pub(crate) fn duration_ms(&self) -> u32 {
         // Values rounded up from the maximum durations given in the datasheet
         // table 4, 'System timing specifications'.
         match self {
