@@ -14,7 +14,7 @@ const RESPONSE_LEN: usize = 6;
 
 /// Driver for STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Sht4x<I, D> {
     i2c: I,
     address: Address,
