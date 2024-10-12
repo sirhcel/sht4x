@@ -12,7 +12,10 @@ pub enum Error<E> {
     Crc,
 }
 
-impl<I: I2c> From<i2c::Error<I>> for Error<I::Error> {
+impl<I> From<i2c::Error<I>> for Error<I::Error>
+where
+    I: I2c,
+{
     fn from(err: i2c::Error<I>) -> Self {
         match err {
             i2c::Error::Crc => Error::Crc,

@@ -5,7 +5,6 @@ use crate::{
 };
 use core::marker::PhantomData;
 use embedded_hal::{delay::DelayNs, i2c::I2c};
-
 use sensirion_i2c::i2c;
 
 const RESPONSE_LEN: usize = 6;
@@ -44,8 +43,9 @@ impl From<Precision> for Command {
     }
 }
 
-impl<I: I2c, D> Sht4x<I, D>
+impl<I, D> Sht4x<I, D>
 where
+    I: I2c,
     D: DelayNs,
 {
     /// Creates a new driver instance using the given I2C bus. It configures the default I2C
