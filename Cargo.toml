@@ -25,7 +25,10 @@ exclude = [
 defmt = { version = "0.3.2", optional = true }
 embedded-hal = "1.0.0"
 fixed = "1.20.0"
-sensirion-i2c = "0.3.0"
+maybe-async-cfg = "0.2.4"
+sensirion-i2c = "0.4.0"
 
 [features]
 defmt = ["dep:defmt"]
+use_sync = []
+use_async = ["sensirion-i2c/embedded-hal-async"]

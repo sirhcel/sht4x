@@ -6,10 +6,15 @@ use crate::{
 use core::marker::PhantomData;
 use embedded_hal::{delay::DelayNs, i2c::I2c};
 use sensirion_i2c::i2c;
+use sensirion_i2c::i2c_async;
 
 const RESPONSE_LEN: usize = 6;
 
 /// Driver for STH4x sensors.
+#[maybe_async_cfg::maybe(
+    sync(feature="use_sync"), 
+    async(feature="use_async")
+)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Debug, Eq, Hash, PartialEq)]
 pub struct Sht4x<I, D> {
@@ -43,6 +48,10 @@ impl From<Precision> for Command {
     }
 }
 
+#[maybe_async_cfg::maybe(
+    sync(feature="use_sync"), 
+    async(feature="use_async")
+)]
 impl<I, D> Sht4x<I, D>
 where
     I: I2c,
@@ -81,13 +90,13 @@ where
     /// check the
     /// [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf),
     /// section 4.9 _Heater Operation_ for details.
-    pub fn heat_and_measure(
+    pub async fn heat_and_measure(
         &mut self,
         power: HeatingPower,
         duration: HeatingDuration,
         delay: &mut D,
     ) -> Result<Measurement, Error<I::Error>> {
-        let raw = self.heat_and_measure_raw(power, duration, delay)?;
+        let raw = self.heat_and_measure_raw(power, duration, delay).await?;
 
         Ok(Measurement::from(raw))
     }
@@ -98,7 +107,7 @@ where
     /// check the
     /// [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf),
     /// section 4.9 _Heater Operation_ for details.
-    pub fn heat_and_measure_raw(
+    pub async fn heat_and_measure_raw(
         &mut self,
         power: HeatingPower,
         duration: HeatingDuration,
@@ -106,42 +115,42 @@ where
     ) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from((power, duration));
 
-        self.write_command_and_delay_for_execution(command, delay)?;
-        let response = self.read_response()?;
+        self.write_command_and_delay_for_execution(command, delay).await?;
+        let response = self.read_response().await?;
         let raw = self.sensor_data_from_response(&response);
 
         Ok(raw)
     }
 
     /// Performs a measurement returning measurands in SI units.
-    pub fn measure(
+    pub async fn measure(
         &mut self,
         precision: Precision,
         delay: &mut D,
     ) -> Result<Measurement, Error<I::Error>> {
-        let raw = self.measure_raw(precision, delay)?;
+        let raw = self.measure_raw(precision, delay).await?;
         Ok(Measurement::from(raw))
     }
 
     /// Performs a measurement returning raw sensor data.
-    pub fn measure_raw(
+    pub async fn measure_raw(
         &mut self,
         precision: Precision,
         delay: &mut D,
     ) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from(precision);
 
-        self.write_command_and_delay_for_execution(command, delay)?;
-        let response = self.read_response()?;
+        self.write_command_and_delay_for_execution(command, delay).await?;
+        let response = self.read_response().await?;
         let raw = self.sensor_data_from_response(&response);
 
         Ok(raw)
     }
 
     /// Reads the sensor's serial number.
-    pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<I::Error>> {
-        self.write_command_and_delay_for_execution(Command::SerialNumber, delay)?;
-        let response = self.read_response()?;
+    pub async fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<I::Error>> {
+        self.write_command_and_delay_for_execution(Command::SerialNumber, delay).await?;
+        let response = self.read_response().await?;
 
         Ok(u32::from_be_bytes([
             response[0],
@@ -152,14 +161,18 @@ where
     }
 
     /// Performs a soft reset of the sensor.
-    pub fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<I::Error>> {
-        self.write_command_and_delay_for_execution(Command::SoftReset, delay)
+    pub async fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<I::Error>> {
+        self.write_command_and_delay_for_execution(Command::SoftReset, delay).await
     }
 
-    fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<I::Error>> {
-        let mut response = [0; RESPONSE_LEN];
+    async fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<I::Error>> {
+        #[maybe_async_cfg::only_if(sync)]
+        use sensirion_i2c::i2c as si2c;
+        #[maybe_async_cfg::only_if(async)]
+        use sensirion_i2c::i2c_async as si2c;
 
-        i2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response)?;
+        let mut response = [0; RESPONSE_LEN];
+        si2c::read_words_with_crc(&mut self.i2c, self.address.into(), &mut response).await?;
 
         Ok(response)
     }
@@ -171,14 +184,18 @@ where
         }
     }
 
-    fn write_command_and_delay_for_execution(
+    async fn write_command_and_delay_for_execution(
         &mut self,
         command: Command,
         delay: &mut D,
     ) -> Result<(), Error<I::Error>> {
-        let code = command.code();
+        #[maybe_async_cfg::only_if(sync)]
+        use sensirion_i2c::i2c as si2c;
+        #[maybe_async_cfg::only_if(async)]
+        use sensirion_i2c::i2c_async as si2c;
 
-        i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)?;
+        let code = command.code();
+        si2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c).await?;
         delay.delay_ms(command.duration_ms());
 
         Ok(())
