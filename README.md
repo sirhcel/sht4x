@@ -36,7 +36,6 @@ tested with the SHT40-AD1B so far.
 ## Example
 
 ```rust ignore
-use embedded_hal::blocking::delay::DelayMs;
 use sht4x::Sht4x;
 // Device-specific use declarations.
 
