@@ -2,7 +2,7 @@ use fixed::types::{I16F16, I18F14, U16F16};
 
 /// I2C adresses used by STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Address {
     Address0x44,
     Address0x45,
@@ -19,7 +19,7 @@ impl From<Address> for u8 {
 
 /// Heating power to apply when activating the internal heater.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum HeatingPower {
     /// Operate the heater at 200 mW.
     Low,
@@ -31,7 +31,7 @@ pub enum HeatingPower {
 
 /// Duration of heating when activating the internal heater.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum HeatingDuration {
     /// Operate the heater for 100 ms.
     Short,
@@ -40,7 +40,7 @@ pub enum HeatingDuration {
 }
 
 /// A measurement from the sensor in SI units.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Measurement {
     /// The measurred temperature in degree Celsius (°C).
     temperature: I16F16,
@@ -52,7 +52,7 @@ pub struct Measurement {
 ///
 /// Higher-precision measurements take longer.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Precision {
     Low,
     Medium,
@@ -61,7 +61,7 @@ pub enum Precision {
 
 /// A measurement from the sensor in raw sensor data.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SensorData {
     /// The measured temperature as raw sensor value.
     pub temperature: u16,

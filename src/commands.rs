@@ -1,5 +1,5 @@
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub(crate) enum Command {
     MeasureHighPrecision,
     MeasureMediumPrecision,

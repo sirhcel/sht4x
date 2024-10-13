@@ -3,7 +3,7 @@ use sensirion_i2c::i2c;
 
 /// Error conditions from accessing SHT4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[non_exhaustive]
 pub enum Error<E> {
     /// Failed I2C communication.
