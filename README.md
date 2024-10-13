@@ -2,7 +2,7 @@
 
 A platform agnostic device driver for the Sensirion [SHT4x temperature and
 humidity sensor
-family](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf).
+family](https://sensirion.com/resource/datasheet/sht4x).
 It is based on [`embedded-hal`](https://github.com/rust-embedded/embedded-hal)
 traits and works in `no_std` environments.
 
@@ -18,7 +18,7 @@ tested with the SHT40-AD1B so far.
 
 - Blocking operation
 - Supports all commands specified in the
-  [datasheet](https://sensirion.com/media/documents/33FD6951/624C4357/Datasheet_SHT4x.pdf)
+  [datasheet](https://sensirion.com/resource/datasheet/sht4x)
 - Explicitly borrows `DelayMs` for command execution so that it could be shared
   (among multiple sensors)
 - Could be instantiated with the alternative I2C address for the SHT40-BD1B
