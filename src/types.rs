@@ -3,9 +3,11 @@ use fixed::types::{I16F16, I18F14, U16F16};
 /// I2C adresses used by STH4x sensors.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub enum Address {
     Address0x44,
     Address0x45,
+    Address0x46,
 }
 
 impl From<Address> for u8 {
@@ -13,6 +15,7 @@ impl From<Address> for u8 {
         match address {
             Address::Address0x44 => 0x44,
             Address::Address0x45 => 0x45,
+            Address::Address0x46 => 0x46,
         }
     }
 }
