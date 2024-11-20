@@ -11,11 +11,11 @@ pub enum Error<E> {
     Crc,
 }
 
-impl<I> From<i2c::Error<I>> for Error<I::Error>
+impl<E> From<i2c::Error<E>> for Error<E::Error>
 where
-    I: embedded_hal::i2c::ErrorType,
+    E: embedded_hal::i2c::ErrorType,
 {
-    fn from(err: i2c::Error<I>) -> Self {
+    fn from(err: i2c::Error<E>) -> Self {
         match err {
             i2c::Error::Crc => Error::Crc,
             i2c::Error::I2cRead(e) => Error::I2c(e),
