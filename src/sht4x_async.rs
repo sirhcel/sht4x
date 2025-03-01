@@ -125,13 +125,7 @@ where
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)
             .await?;
         let response = self.read_response().await?;
-
-        Ok(u32::from_be_bytes([
-            response[0],
-            response[1],
-            response[3],
-            response[4],
-        ]))
+        Ok(crate::sht4x::serial_number_from_response(&response))
     }
 
     /// Performs a soft reset of the sensor.
