@@ -142,13 +142,7 @@ where
     pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<I::Error>> {
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)?;
         let response = self.read_response()?;
-
-        Ok(u32::from_be_bytes([
-            response[0],
-            response[1],
-            response[3],
-            response[4],
-        ]))
+        Ok(serial_number_from_response(&response))
     }
 
     /// Performs a soft reset of the sensor.
@@ -183,4 +177,8 @@ pub(crate) fn sensor_data_from_response(response: &[u8; RESPONSE_LEN]) -> Sensor
         temperature: u16::from_be_bytes([response[0], response[1]]),
         humidity: u16::from_be_bytes([response[3], response[4]]),
     }
+}
+
+pub(crate) fn serial_number_from_response(response: &[u8; RESPONSE_LEN]) -> u32 {
+    u32::from_be_bytes([response[0], response[1], response[3], response[4]])
 }
