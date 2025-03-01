@@ -1,7 +1,7 @@
 use crate::{
     commands::Command,
     error::Error,
-    sht4x::RESPONSE_LEN,
+    responses::{sensor_data_from_response, serial_number_from_response, RESPONSE_LEN},
     types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData},
 };
 use core::marker::PhantomData;
@@ -89,7 +89,7 @@ where
         self.write_command_and_delay_for_execution(command, delay)
             .await?;
         let response = self.read_response().await?;
-        let raw = crate::sht4x::sensor_data_from_response(response);
+        let raw = sensor_data_from_response(response);
 
         Ok(raw)
     }
@@ -115,7 +115,7 @@ where
         self.write_command_and_delay_for_execution(command, delay)
             .await?;
         let response = self.read_response().await?;
-        let raw = crate::sht4x::sensor_data_from_response(response);
+        let raw = sensor_data_from_response(response);
 
         Ok(raw)
     }
@@ -125,7 +125,7 @@ where
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)
             .await?;
         let response = self.read_response().await?;
-        Ok(crate::sht4x::serial_number_from_response(response))
+        Ok(serial_number_from_response(response))
     }
 
     /// Performs a soft reset of the sensor.
