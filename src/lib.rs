@@ -5,6 +5,7 @@
 
 mod commands;
 mod error;
+mod responses;
 mod sht4x;
 mod types;
 
