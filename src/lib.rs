@@ -9,9 +9,9 @@ mod sht4x;
 mod types;
 
 #[cfg(feature = "embedded-hal-async")]
-mod async_sht4x;
+mod sht4x_async;
 #[cfg(feature = "embedded-hal-async")]
-pub use self::async_sht4x::Sht4xAsync;
+pub use self::sht4x_async::Sht4xAsync;
 
 pub use crate::error::*;
 pub use crate::sht4x::*;
