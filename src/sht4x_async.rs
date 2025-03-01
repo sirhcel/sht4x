@@ -89,7 +89,7 @@ where
         self.write_command_and_delay_for_execution(command, delay)
             .await?;
         let response = self.read_response().await?;
-        let raw = crate::sht4x::sensor_data_from_response(&response);
+        let raw = crate::sht4x::sensor_data_from_response(response);
 
         Ok(raw)
     }
@@ -115,7 +115,7 @@ where
         self.write_command_and_delay_for_execution(command, delay)
             .await?;
         let response = self.read_response().await?;
-        let raw = crate::sht4x::sensor_data_from_response(&response);
+        let raw = crate::sht4x::sensor_data_from_response(response);
 
         Ok(raw)
     }
@@ -125,7 +125,7 @@ where
         self.write_command_and_delay_for_execution(Command::SerialNumber, delay)
             .await?;
         let response = self.read_response().await?;
-        Ok(crate::sht4x::serial_number_from_response(&response))
+        Ok(crate::sht4x::serial_number_from_response(response))
     }
 
     /// Performs a soft reset of the sensor.
