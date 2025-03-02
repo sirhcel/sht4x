@@ -4,13 +4,15 @@
 
 ### Added
 
+* Support for `embedded-hal-async` [#7](https://github.com/sirhcel/sht4x/pull/7)
 * Implementations of common traits according to [Rust API Guidelines
   Checklist](https://rust-lang.github.io/api-guidelines/checklist.html)
 * New I2C address 0x46 for SHT40-CD1B-R3
 
 ### Changed
 
-* embedded-hal from 0.2 to 1.0
+* embedded-hal from 0.2 to 1.0 [#3](https://github.com/sirhcel/sht4x/pull/4)
+  and [#6](https://github.com/sirhcel/sht4x/pull/6)
 * Made `Address` a non-exhaustive enum
 
 ### Fixed
