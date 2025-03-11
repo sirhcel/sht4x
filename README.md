@@ -1,9 +1,11 @@
 # Sensirion SHT4x Driver for Embedded HAL
 
 A platform agnostic device driver for the Sensirion [SHT4x temperature and
-humidity sensor
-family](https://sensirion.com/resource/datasheet/sht4x).
-It is based on [`embedded-hal`](https://github.com/rust-embedded/embedded-hal)
+humidity sensor family](https://sensirion.com/resource/datasheet/sht4x). It is
+based on
+[embedded-hal](https://github.com/rust-embedded/embedded-hal/tree/master/embedded-hal)
+and
+[embedded-hal-async](https://github.com/rust-embedded/embedded-hal/tree/master/embedded-hal-async)
 traits and works in `no_std` environments.
 
 In theory, it supports all of the sensor family's devices but has only been
@@ -16,12 +18,10 @@ tested with the SHT40-AD1B so far.
 
 ## Features
 
-- Blocking operation
+- Blocking and optional async operation
 - Supports all commands specified in the
   [datasheet](https://sensirion.com/resource/datasheet/sht4x)
-- Explicitly borrows `DelayMs` for command execution so that it could be shared
-  (among multiple sensors)
-- Could be instantiated with the alternative I2C address for the SHT40-BD1B
+- Could be instantiated with the alternative I2C addresses
 - Uses fixed-point arithmetics for converting raw sensor data into measurements
   in SI units
     - Based on `I16F16` from the [`fixed`](https://gitlab.com/tspiteri/fixed)
@@ -33,20 +33,28 @@ tested with the SHT40-AD1B so far.
 - Optional support for [`defmt`](https://github.com/knurling-rs/defmt)
 
 
-## Example
+## Examples
+
+### Blocking
+
+This example makes use of `defmt`, so add this crate with this feature enabled:
+
+```bash ignore
+$ cargo add --features defmt sht4x
+```
 
 ```rust ignore
 use sht4x::Sht4x;
 // Device-specific use declarations.
 
-let mut delay = // Device-specific initialization of delay.
+let delay = // Device-specific initialization of delay.
 let i2c = // Device-specific initialization of I2C peripheral.
-let mut sht40 = Sht4x::new(i2c);
+let mut sht4x = Sht4x::new(i2c, delay);
 
-let serial = sht40.serial_number(&mut delay);
+let serial = sht4x.serial_number();
 defmt::info!("serial number: {}", serial);
 
-let measurement = sht40.measure(Precision::Low, &mut delay);
+let measurement = sht4x.measure(Precision::Low);
 defmt::info!("measurement: {}", &measurement);
 
 if let Ok(measurement) = measurement {
@@ -58,30 +66,40 @@ if let Ok(measurement) = measurement {
 }
 ```
 
-## `embedded-hal-async` support
+### Async
 
-This crate has optional support for the [`embedded-hal-async`] crate, which
-provides `async` versions of the `I2c` and `DelayNs` traits. Async support
-is an off-by-default optional feature, so that projects which aren't using
-[`embedded-hal-async`] can avoid the additional dependency.
+Using the async variant of this driver requires enabling the optional feature
+`embedded-hal-async` and this example also uses the optional support for
+`defmt`:
 
-To use this crate with `embedded-hal-async`, enable the `embedded-hal-async`
-feature flag in your `Cargo.toml`:
-
-```toml
-sht4x = { version = "0.2", features = ["embedded-hal-async"] }
+```bash ignore
+$ cargo add --features defmt,embedded-hal-async sht4x
 ```
 
-Once the `embedded-hal-async` feature is enabled, construct an instance of
-the `Sht4xAsync` struct, providing types implementing the
-[`embedded_hal_async::i2c::I2c`] and [`embedded_hal_async::delay::DelayNs`]
-traits. The `Sht4xAsync` struct is identical to the `Sht4x` struct,
-except that its methods are `async fn`s.
+The `Sht4xAsync` struct is identical to the `Sht4x` struct, except that its
+methods are `async fn`s:
 
-[`embedded-hal-async`]: https://crates.io/crates/embedded-hal-async
-[`embedded_hal_async::i2c::I2c`]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/i2c/trait.I2c.html
-[`embedded_hal_async::delay::DelayNs`]: https://docs.rs/embedded-hal-async/latest/embedded_hal_async/delay/trait.DelayNs.html
+```rust ignore
+use sht4x::Sht4xAsync;
+// Device-specific use declarations.
 
+let delay = // Device-specific initialization of delay.
+let i2c = // Device-specific initialization of I2C peripheral.
+let mut sht4x = Sht4xAsync::new(i2c, delay);
+
+let serial = sht4x.serial_number().await;
+defmt::info!("serial number: {}", serial);
+
+let measurement = sht4x.measure(Precision::Low).await;
+
+if let Ok(measurement) = measurement {
+    // Convert temperature measurand into different formats for further
+    // processing.
+    let int: i32 = measurement.temperature_milli_celsius();
+    let fixed: I16F16 = measurement.temperature_celsius();
+    let float: f32 = measurement.temperature_celsius().to_num();
+}
+```
 
 ## Related Work
 
