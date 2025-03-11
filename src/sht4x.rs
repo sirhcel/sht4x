@@ -1,11 +1,10 @@
-use crate::{
-    commands::Command,
-    error::Error,
-    responses::{sensor_data_from_response, serial_number_from_response, RESPONSE_LEN},
-    types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData},
-};
+use crate::commands::Command;
+use crate::error::Error;
+use crate::responses::{sensor_data_from_response, serial_number_from_response, RESPONSE_LEN};
+use crate::types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData};
 use core::marker::PhantomData;
-use embedded_hal::{delay::DelayNs, i2c::I2c};
+use embedded_hal::delay::DelayNs;
+use embedded_hal::i2c::I2c;
 use sensirion_i2c::i2c;
 
 /// Driver for STH4x sensors.
