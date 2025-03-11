@@ -2,7 +2,6 @@ use crate::commands::Command;
 use crate::error::Error;
 use crate::responses::{sensor_data_from_response, serial_number_from_response, RESPONSE_LEN};
 use crate::types::{Address, HeatingDuration, HeatingPower, Measurement, Precision, SensorData};
-use core::marker::PhantomData;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 use sensirion_i2c::i2c;
@@ -13,9 +12,7 @@ use sensirion_i2c::i2c;
 pub struct Sht4x<I, D> {
     i2c: I,
     address: Address,
-    // If we want to globally define the delay type for this struct, we have to consume the type
-    // parameter.
-    _delay: PhantomData<D>,
+    delay: D,
 }
 
 impl From<(HeatingPower, HeatingDuration)> for Command {
@@ -51,8 +48,8 @@ where
     ///
     /// For operating multiple devices on the same bus,
     /// [`shared-bus`](https://github.com/Rahix/shared-bus) might come in handy.
-    pub fn new(i2c: I) -> Self {
-        Self::new_with_address(i2c, Address::Address0x44)
+    pub fn new(i2c: I, delay: D) -> Self {
+        Self::new_with_address(i2c, Address::Address0x44, delay)
     }
 
     /// Crates a new driver instance using the given I2C bus and address. This constructor allows
@@ -60,11 +57,11 @@ where
     ///
     /// For operating multiple devices on the same bus,
     /// [`shared-bus`](https://github.com/Rahix/shared-bus) might come in handy.
-    pub fn new_with_address(i2c: I, address: Address) -> Self {
+    pub fn new_with_address(i2c: I, address: Address, delay: D) -> Self {
         Sht4x {
             i2c,
             address,
-            _delay: PhantomData,
+            delay,
         }
     }
 
@@ -83,9 +80,8 @@ where
         &mut self,
         power: HeatingPower,
         duration: HeatingDuration,
-        delay: &mut D,
     ) -> Result<Measurement, Error<I::Error>> {
-        let raw = self.heat_and_measure_raw(power, duration, delay)?;
+        let raw = self.heat_and_measure_raw(power, duration)?;
 
         Ok(Measurement::from(raw))
     }
@@ -100,11 +96,10 @@ where
         &mut self,
         power: HeatingPower,
         duration: HeatingDuration,
-        delay: &mut D,
     ) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from((power, duration));
 
-        self.write_command_and_delay_for_execution(command, delay)?;
+        self.write_command_and_delay_for_execution(command)?;
         let response = self.read_response()?;
         let raw = sensor_data_from_response(response);
 
@@ -112,24 +107,16 @@ where
     }
 
     /// Performs a measurement returning measurands in SI units.
-    pub fn measure(
-        &mut self,
-        precision: Precision,
-        delay: &mut D,
-    ) -> Result<Measurement, Error<I::Error>> {
-        let raw = self.measure_raw(precision, delay)?;
+    pub fn measure(&mut self, precision: Precision) -> Result<Measurement, Error<I::Error>> {
+        let raw = self.measure_raw(precision)?;
         Ok(Measurement::from(raw))
     }
 
     /// Performs a measurement returning raw sensor data.
-    pub fn measure_raw(
-        &mut self,
-        precision: Precision,
-        delay: &mut D,
-    ) -> Result<SensorData, Error<I::Error>> {
+    pub fn measure_raw(&mut self, precision: Precision) -> Result<SensorData, Error<I::Error>> {
         let command = Command::from(precision);
 
-        self.write_command_and_delay_for_execution(command, delay)?;
+        self.write_command_and_delay_for_execution(command)?;
         let response = self.read_response()?;
         let raw = sensor_data_from_response(response);
 
@@ -137,15 +124,15 @@ where
     }
 
     /// Reads the sensor's serial number.
-    pub fn serial_number(&mut self, delay: &mut D) -> Result<u32, Error<I::Error>> {
-        self.write_command_and_delay_for_execution(Command::SerialNumber, delay)?;
+    pub fn serial_number(&mut self) -> Result<u32, Error<I::Error>> {
+        self.write_command_and_delay_for_execution(Command::SerialNumber)?;
         let response = self.read_response()?;
         Ok(serial_number_from_response(response))
     }
 
     /// Performs a soft reset of the sensor.
-    pub fn soft_reset(&mut self, delay: &mut D) -> Result<(), Error<I::Error>> {
-        self.write_command_and_delay_for_execution(Command::SoftReset, delay)
+    pub fn soft_reset(&mut self) -> Result<(), Error<I::Error>> {
+        self.write_command_and_delay_for_execution(Command::SoftReset)
     }
 
     fn read_response(&mut self) -> Result<[u8; RESPONSE_LEN], Error<I::Error>> {
@@ -159,12 +146,11 @@ where
     fn write_command_and_delay_for_execution(
         &mut self,
         command: Command,
-        delay: &mut D,
     ) -> Result<(), Error<I::Error>> {
         let code = command.code();
 
         i2c::write_command_u8(&mut self.i2c, self.address.into(), code).map_err(Error::I2c)?;
-        delay.delay_ms(command.duration_ms());
+        self.delay.delay_ms(command.duration_ms());
 
         Ok(())
     }
