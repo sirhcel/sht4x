@@ -101,6 +101,12 @@ if let Ok(measurement) = measurement {
 }
 ```
 
+### Self-contained Examples
+
+You can find more and self-contained examples in
+<https://github.com/sirhcel/sht4x-examples>.
+
+
 ## Related Work
 
 [sensor-temp-humidity-sht40](https://github.com/lc525/sensor-temp-humidity-sht40-rs)
